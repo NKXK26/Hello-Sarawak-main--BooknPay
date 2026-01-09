@@ -636,19 +636,19 @@ const Product = () => {
 
                       // Map vehicle names to image paths - use relative paths from public folder
                       const vehicleImageMap = {
-                        'perodua myvi': '/cars/Perodua Myvi.png',
-                        'perodua axia': '/cars/Perodua Axia.png',
-                        'honda city': '/cars/Honda City.png',
-                        'toyota vios': '/cars/Toyota Vios.png',
-                        'proton saga': '/cars/Proton Saga.png',
-                        'perodua alza': '/cars/Perodua Alza.png',
-                        'perodua bezza': '/cars/Perodua Bezza.png',
-                        'perodua myvi (new)': '/cars/Perodua Myvi (New).png',
-                        'toyota fortuner': '/cars/Toyota Fortuner.png',
-                        'perodua alza (new)': '/cars/Perodua Alza (New).png',
-                        'toyota sienta': '/cars/Toyota Sienta.png',
-                        'perodua aruz': '/cars/Perodua Aruz.png',
-                        'nissan urvan nv350': '/cars/Nissan Urvan NV350.png',
+                        'perodua myvi': 'public/cars/Perodua Myvi.png',
+                        'perodua axia': 'public/cars/Perodua Axia.png',
+                        'honda city': 'public/cars/Honda City.png',
+                        'toyota vios': 'public/cars/Toyota Vios.png',
+                        'proton saga': 'public/cars/Proton Saga.png',
+                        'perodua alza': 'public/cars/Perodua Alza.png',
+                        'perodua bezza': 'public/cars/Perodua Bezza.png',
+                        'perodua myvi (new)': 'public/cars/Perodua Myvi (New).png',
+                        'toyota fortuner': 'public/cars/Toyota Fortuner.png',
+                        'perodua alza (new)': 'public/cars/Perodua Alza (New).png',
+                        'toyota sienta': 'public/cars/Toyota Sienta.png',
+                        'perodua aruz': 'public/cars/Perodua Aruz.png',
+                        'nissan urvan nv350': 'public/cars/Nissan Urvan NV350.png',
                       };
 
                       // Try exact match first, then check for partial matches
