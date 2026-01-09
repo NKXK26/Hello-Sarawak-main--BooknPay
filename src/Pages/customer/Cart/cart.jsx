@@ -37,33 +37,27 @@ const Cart = () => {
     import.meta.env.VITE_PAYPAL_CLIENT_ID || 'AQnKj2txjl1bnlCBzthuCa7DtxuK3X0PsNlrDhjDwxQasGACq8Y0PGNbaTEEuIDTFe9HGfIOis0tOstU'
   );
 
-  // DEBUG: Log component mount
+
   useEffect(() => {
-    console.log('🚀 Cart component mounted');
     loadCart();
   }, []);
 
   const loadCart = () => {
-    console.log('📦 Loading cart...');
     const token = localStorage.getItem('cartToken');
-    console.log('🔑 Cart token found:', token);
 
     if (token) {
       const items = JSON.parse(localStorage.getItem(`cart_${token}`)) || [];
-      console.log('🛒 Raw cart items:', items.length, items);
-
-      // Filter out expired items (older than 24 hours)
       const now = new Date();
       const validItems = items.filter(item => {
         const expiresAt = new Date(item.expires_at);
         return expiresAt > now;
       });
 
-      console.log('✅ Valid cart items:', validItems.length);
+
 
       // Update storage if some items expired
       if (validItems.length !== items.length) {
-        console.log('🗑️ Removing expired items');
+
         localStorage.setItem(`cart_${token}`, JSON.stringify(validItems));
       }
 
@@ -72,14 +66,11 @@ const Cart = () => {
 
       const total = validItems.reduce((sum, item) => sum + item.total_price, 0);
       setTotalAmount(total);
-      console.log('💰 Total amount:', total);
-    } else {
-      console.log('❌ No cart token found');
     }
   };
 
   const removeItem = (itemId) => {
-    console.log('🗑️ Removing item:', itemId);
+
     const token = localStorage.getItem('cartToken');
     if (!token) return;
 
@@ -92,13 +83,11 @@ const Cart = () => {
     const total = updatedItems.reduce((sum, item) => sum + item.total_price, 0);
     setTotalAmount(total);
 
-    // Update cart count in all pages
     window.dispatchEvent(new Event('cartUpdated'));
     console.log('✅ Item removed, new total:', total);
   };
 
   const clearCart = () => {
-    console.log('🧹 Clear cart requested');
     if (window.confirm('Are you sure you want to clear your cart?')) {
       const token = localStorage.getItem('cartToken');
       if (token) {
@@ -110,26 +99,23 @@ const Cart = () => {
 
         // Update cart count in all pages
         window.dispatchEvent(new Event('cartUpdated'));
-        console.log('✅ Cart cleared');
       }
     }
   };
 
   const continueShopping = () => {
-    console.log('🛍️ Continue shopping clicked');
+
     navigate('/product');
   };
 
-  // Validate cart items before payment
   const validateCartItems = () => {
-    console.log('🔍 Validating cart items...');
+
     if (cartItems.length === 0) {
-      console.log('❌ Cart is empty');
       displayToast('error', 'Your cart is empty');
       return false;
     }
 
-    // Check for expired items
+
     const now = new Date();
     const expiredItems = cartItems.filter(item => {
       const expiresAt = new Date(item.expires_at);
@@ -137,45 +123,35 @@ const Cart = () => {
     });
 
     if (expiredItems.length > 0) {
-      console.log('❌ Expired items found:', expiredItems.length);
+
       displayToast('error', 'Some items in your cart have expired. Please remove them.');
       return false;
     }
 
-    // Validate all items have required info
+
     const incompleteItems = cartItems.filter(item =>
       !item.first_name || !item.last_name || !item.email || !item.phone
     );
 
     if (incompleteItems.length > 0) {
-      console.log('❌ Incomplete items:', incompleteItems.length);
+
       displayToast('error', 'Please complete customer information for all items before checkout');
       return false;
     }
-
-    console.log('✅ Cart validation passed');
     return true;
   };
 
-  // Display toast messages
   const displayToast = (type, message) => {
-    console.log('📢 Toast:', type, '-', message);
+
     setToastType(type);
     setToastMessage(message);
     setShowToast(true);
     setTimeout(() => setShowToast(false), 5000);
   };
 
-  // Add this function for cart checkout
-  const handleCartCheckout = async (paypalDetails) => {
-    console.log('🛒 handleCartCheckout STARTED');
-    console.log('📋 Cart token:', cartToken);
-    console.log('📦 Cart items count:', cartItems.length);
-    console.log('💳 PayPal details:', paypalDetails);
 
+  const handleCartCheckout = async (paypalDetails) => {
     try {
-      // 1. First, create bookings for all cart items
-      console.log('📤 Sending checkout request to backend...');
       const checkoutResponse = await fetch('http://localhost:5432/cart/checkout', {
         method: 'POST',
         headers: {
@@ -188,9 +164,6 @@ const Cart = () => {
         })
       });
 
-      console.log('📥 Checkout response status:', checkoutResponse.status);
-      console.log('📥 Checkout response headers:', checkoutResponse.headers);
-
       if (!checkoutResponse.ok) {
         const errorText = await checkoutResponse.text();
         console.error('❌ Checkout failed:', errorText);
@@ -198,11 +171,6 @@ const Cart = () => {
       }
 
       const checkoutData = await checkoutResponse.json();
-      console.log('✅ Checkout data received:', checkoutData);
-      console.log('📋 Booking IDs:', checkoutData.booking_ids);
-
-      // 2. Update bookings with PayPal details
-      console.log('📤 Sending PayPal completion request...');
       const completeResponse = await fetch('http://localhost:5432/cart/paypal-complete', {
         method: 'PATCH',
         headers: {
@@ -215,8 +183,6 @@ const Cart = () => {
         })
       });
 
-      console.log('📥 Complete response status:', completeResponse.status);
-
       if (!completeResponse.ok) {
         const errorText = await completeResponse.text();
         console.error('❌ PayPal update failed:', errorText);
@@ -224,8 +190,6 @@ const Cart = () => {
       }
 
       const completeData = await completeResponse.json();
-      console.log('✅ PayPal completion data:', completeData);
-      console.log('🛒 handleCartCheckout COMPLETED');
 
       return checkoutData.booking_ids;
     } catch (error) {
@@ -236,7 +200,6 @@ const Cart = () => {
   };
 
 const handlePayPalPayment = async (paypalDetails) => {
-  console.log('🛒 handlePayPalPayment STARTED');
 
   setIsProcessingPayment(true);
 
@@ -246,7 +209,7 @@ const handlePayPalPayment = async (paypalDetails) => {
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({
         cart_token: cartToken,
-        cart_items: cartItems,   // FROM localStorage
+        cart_items: cartItems,   
         paypal_details: paypalDetails
       })
     });
@@ -257,14 +220,13 @@ const handlePayPalPayment = async (paypalDetails) => {
     }
 
     const data = await response.json();
-    console.log('✅ Booking created:', data.booking_ids);
 
-    // ✅ Clear cart
+
     localStorage.removeItem(`cart_${cartToken}`);
     localStorage.removeItem('cartToken');
     window.dispatchEvent(new Event('cartUpdated'));
 
-    // ✅ Update UI
+    
     setCartItems([]);
     setTotalAmount(0);
     setPaymentStatus('success');
@@ -281,10 +243,8 @@ const handlePayPalPayment = async (paypalDetails) => {
   }
 };
 
-  // Calculate total for PayPal
   const calculateTotalForPayPal = () => {
     const total = cartItems.reduce((sum, item) => sum + item.total_price, 0).toFixed(2);
-    console.log('🧮 PayPal total calculated:', total);
     return total;
   };
 
@@ -294,7 +254,6 @@ const handlePayPalPayment = async (paypalDetails) => {
 
       <div className="cart-header">
         <button className="back-button" onClick={() => {
-          console.log('🔙 Back button clicked');
           navigate(-1);
         }}>
           <IoIosArrowBack /> Back
@@ -326,7 +285,6 @@ const handlePayPalPayment = async (paypalDetails) => {
             <div className="cart-items-section">
               <div className="cart-items">
                 {cartItems.map((item, index) => {
-                  console.log(`📋 Rendering cart item ${index}:`, item.id);
                   return (
                     <div key={item.id} className="cart-item">
                       <div className="item-image">
@@ -453,7 +411,6 @@ const handlePayPalPayment = async (paypalDetails) => {
                   <button
                     className="retry-btn"
                     onClick={() => {
-                      console.log('🔄 Retry button clicked');
                       setPaymentStatus('idle');
                     }}
                   >
@@ -489,17 +446,14 @@ const handlePayPalPayment = async (paypalDetails) => {
                         height: 48
                       }}
                       createOrder={(data, actions) => {
-                        console.log('💰 PayPal createOrder STARTED');
 
                         // Validate cart before creating order
                         if (!validateCartItems()) {
-                          console.log('❌ Cart validation failed, rejecting order');
                           return Promise.reject('Please fix cart issues before payment');
                         }
 
                         // Calculate totals
                         const totalAmount = cartItems.reduce((sum, item) => sum + item.total_price, 0);
-                        console.log('🧮 Creating PayPal order for amount:', totalAmount);
 
                         return actions.order.create({
                           purchase_units: [
@@ -530,7 +484,6 @@ const handlePayPalPayment = async (paypalDetails) => {
                             locale: 'en-MY'
                           }
                         }).then(order => {
-                          console.log('✅ PayPal order created:', order.id);
                           return order;
                         }).catch(error => {
                           console.error('❌ PayPal order creation failed:', error);
@@ -538,12 +491,8 @@ const handlePayPalPayment = async (paypalDetails) => {
                         });
                       }}
                       onApprove={(data, actions) => {
-                        console.log('✅ PayPal onApprove');
 
                         return actions.order.capture().then((details) => {
-                          console.log('✅ Payment captured:', details);
-
-                          // VERY IMPORTANT: exit PayPal flow immediately
                           setTimeout(() => {
                             handlePayPalPayment(details);
                           }, 0);
@@ -562,27 +511,16 @@ const handlePayPalPayment = async (paypalDetails) => {
                         console.error('❌ Error details:', JSON.stringify(err));
                         displayToast('error', 'Payment processing error. Please try again.');
                         setIsProcessingPayment(false);
-                        console.log('🔄 isProcessingPayment set to false');
                       }}
                       onCancel={() => {
-                        console.log('❌ PayPal payment cancelled by user');
                         displayToast('info', 'Payment cancelled. You can try again.');
                         setIsProcessingPayment(false);
-                        console.log('🔄 isProcessingPayment set to false');
                       }}
                       disabled={isProcessingPayment || cartItems.length === 0}
                     />
                   </PayPalScriptProvider>
 
                   <div className="payment-notes">
-                    <p><strong>Debug Info:</strong></p>
-                    <ul>
-                      <li>Cart Items: {cartItems.length}</li>
-                      <li>Cart Token: {cartToken ? '✓' : '✗'}</li>
-                      <li>Total Amount: RM {totalAmount.toFixed(2)}</li>
-                      <li>Payment Status: {paymentStatus}</li>
-                    </ul>
-                    <p><strong>Important:</strong></p>
                     <ul>
                       <li>Complete payment to confirm all bookings</li>
                       <li>Bring driving license for verification at pickup</li>
@@ -591,16 +529,6 @@ const handlePayPalPayment = async (paypalDetails) => {
                     </ul>
                   </div>
                 </div>
-              )}
-
-              {/* Clear Cart Button */}
-              {cartItems.length > 0 && !isProcessingPayment && paymentStatus === 'idle' && (
-                <button
-                  className="clear-cart-btn"
-                  onClick={clearCart}
-                >
-                  <FaTrash /> Clear Cart
-                </button>
               )}
             </div>
           </>

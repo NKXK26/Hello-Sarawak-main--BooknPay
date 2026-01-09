@@ -12,7 +12,6 @@ import Reviews from '../../../Component/Reviews/Reviews';
 import Footer from '../../../Component/Footer/footer';
 import './PropertyDetails.css';
 import { createReservation, requestBooking, getCoordinates, fetchUserData, checkDateOverlap } from '../../../../Api/api';
-// Add import for PayPal
 import { PayPalScriptProvider, PayPalButtons } from "@paypal/react-paypal-js";
 
 const VehicleDetails = () => {
@@ -52,7 +51,7 @@ const VehicleDetails = () => {
   const [showFeaturesOverlay, setShowFeaturesOverlay] = useState(false);
   const [currentSlide, setCurrentSlide] = useState(0);
 
-  // Add these to your VehicleDetails component state - MOVED INSIDE COMPONENT
+
   const [isProcessingPayment, setIsProcessingPayment] = useState(false);
   const [bookingId, setBookingId] = useState('');
 
@@ -63,7 +62,7 @@ const VehicleDetails = () => {
   const [paymentStatus, setPaymentStatus] = useState('idle');
   const [paymentError, setPaymentError] = useState('');
 
-  // Add validation function - MOVED INSIDE COMPONENT
+
   const validateBookingForm = () => {
     const requiredFields = [
       'firstName', 'lastName', 'email', 'phoneNumber', 'drivingLicense'
@@ -75,13 +74,12 @@ const VehicleDetails = () => {
       }
     }
 
-    // Validate email format
+
     const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
     if (!emailRegex.test(bookingForm.email)) {
       return false;
     }
 
-    // Validate phone number (basic validation)
     if (bookingForm.phoneNumber.length < 8) {
       return false;
     }
@@ -93,85 +91,6 @@ const VehicleDetails = () => {
     return true;
   };
 
-
-  // const handlePayPalBooking = async (paymentDetails) => {
-  //   setIsProcessingPayment(true);
-
-  //   try {
-  //     // 1. Generate booking ID
-  //     const bookingIdResponse = await generateVehicleBookingId();
-  //     const generatedBookingId = bookingIdResponse.bookingID;
-  //     setBookingId(generatedBookingId);
-
-  //     // 2. Prepare booking data
-  //     const bookingDataForDB = {
-  //       bookingID: generatedBookingId,
-  //       vehicle: vehicleDetails?.vehicle,
-  //       fullName: `${bookingForm.title} ${bookingForm.firstName} ${bookingForm.lastName}`,
-  //       email: bookingForm.email,
-  //       mobile: bookingForm.phoneNumber,
-  //       license: bookingForm.drivingLicense,
-  //       additionalInfo: bookingForm.additionalRequests || '',
-  //       flightNumber: '',
-  //       pickupLoc: bookingData.pickupLocation || 'Main Office',
-  //       dropoffLoc: bookingData.returnLocation || bookingData.pickupLocation || 'Main Office',
-  //       pickupDate: bookingData.pickupDate,
-  //       dropoffDate: bookingData.returnDate,
-  //       pickupTime: bookingData.pickupTime,
-  //       dropoffTime: bookingData.returnTime,
-  //       others: '',
-  //       extras: bookingData.rateType || 'Daily',
-  //       total: totalPrice,
-  //       status: 'Pending',
-  //       payment_method: 'paypal',
-  //       paypal_order_id: paymentDetails.id,
-  //       paypal_transaction_id: paymentDetails.purchase_units[0]?.payments?.captures[0]?.id,
-  //       vehicle_id: vehicleDetails?.id,
-  //       user_id: localStorage.getItem('userid') || null
-  //     };
-
-  //     console.log('Creating booking:', bookingDataForDB);
-
-  //     // 3. Create booking in database
-  //     const bookingResponse = await createVehicleBooking(bookingDataForDB);
-
-  //     if (!bookingResponse.success) {
-  //       throw new Error('Failed to create booking record');
-  //     }
-
-  //     // 4. Update booking with PayPal transaction details
-  //     await updateVehicleBookingWithPayPal(generatedBookingId, {
-  //       paypal_order_id: paymentDetails.id,
-  //       paypal_transaction_id: paymentDetails.purchase_units[0]?.payments?.captures[0]?.id,
-  //       payment_status: 'COMPLETED'
-  //     });
-
-  //     // 5. Show success message
-  //     displayToast('success', `Booking confirmed! Your booking ID is: ${generatedBookingId}`);
-
-  //     // 6. Update state
-  //     setPaymentStatus('success');
-  //     setBookingId(generatedBookingId);
-
-  //     // 7. Optional: Navigate to confirmation page or show success modal
-  //     // setTimeout(() => {
-  //     //   setShowBookingForm(false);
-  //     //   navigate(`/booking-confirmation/${generatedBookingId}`);
-  //     // }, 3000);
-
-  //   } catch (error) {
-  //     console.error('Booking error:', error);
-  //     displayToast('error', 'Payment successful but booking creation failed. Please contact support.');
-  //     setPaymentStatus('error');
-  //     setPaymentError(error.message);
-  //   } finally {
-  //     setIsProcessingPayment(false);
-  //   }
-  // };
-
-  // Add these API functions that are missing:
-
-  // Add these state variables at the top of your component
   const [cartToken, setCartToken] = useState('');
   const [cartCount, setCartCount] = useState(0);
   useEffect(() => {
@@ -185,7 +104,7 @@ const VehicleDetails = () => {
 
     updateCartCount();
 
-    // Listen for cart updates
+
     window.addEventListener('cartUpdated', updateCartCount);
     window.addEventListener('storage', updateCartCount);
 
@@ -195,42 +114,41 @@ const VehicleDetails = () => {
     };
   }, []);
 
-  // Add this useEffect to initialize cart
   useEffect(() => {
     initializeCart();
   }, []);
 
-  // Function to initialize or get existing cart
+
   const initializeCart = () => {
-    // Try to get existing cart token
+
     let storedToken = localStorage.getItem('cartToken');
 
     if (!storedToken) {
-      // Generate new cart token
+
       storedToken = generateCartToken();
       localStorage.setItem('cartToken', storedToken);
-      // Initialize empty cart
+
       localStorage.setItem(`cart_${storedToken}`, JSON.stringify([]));
     }
 
     setCartToken(storedToken);
 
-    // Load cart count
+
     const cartItems = JSON.parse(localStorage.getItem(`cart_${storedToken}`)) || [];
     setCartCount(cartItems.length);
 
-    // Clean up old carts (optional)
+
     cleanupOldCarts(storedToken);
   };
 
-  // Generate unique cart token
+
   const generateCartToken = () => {
     const timestamp = Date.now();
     const random = Math.random().toString(36).substr(2, 9);
     return `cart_${timestamp}_${random}`;
   };
 
-  // Clean up carts older than 7 days
+
   const cleanupOldCarts = (currentToken) => {
     const oneWeekAgo = Date.now() - (7 * 24 * 60 * 60 * 1000);
 
@@ -247,127 +165,12 @@ const VehicleDetails = () => {
             }
           }
         } catch (e) {
-          // If corrupted, remove it
+
           localStorage.removeItem(key);
         }
       }
     });
   };
-
-  // Function to add vehicle to cart (no login required)
-  const addToCart = () => {
-    // Validate dates
-    if (!bookingData.pickupDate || !bookingData.returnDate) {
-      displayToast('error', 'Please select pickup and return dates first');
-      return;
-    }
-
-    // Validate basic info (optional - you can make some fields optional)
-    if (!bookingForm.firstName || !bookingForm.lastName || !bookingForm.email || !bookingForm.phoneNumber) {
-      displayToast('error', 'Please fill all required personal information');
-      return;
-    }
-
-    // Get or create cart token
-    let token = localStorage.getItem('cartToken');
-    if (!token) {
-      token = generateCartToken();
-      localStorage.setItem('cartToken', token);
-      localStorage.setItem(`cart_${token}`, JSON.stringify([]));
-      setCartToken(token);
-    }
-
-    // Create cart item
-    const cartItem = {
-      id: `${vehicleDetails.id}_${Date.now()}_${Math.random().toString(36).substr(2, 5)}`,
-      vehicle_id: vehicleDetails.id,
-      vehicle: vehicleDetails.vehicle,
-      brand: vehicleDetails.brand_name || vehicleDetails.brand,
-      seats: vehicleDetails.seat || 5,
-      transmission: vehicleDetails.transmission_name || 'Automatic',
-      price_per_day: parseFloat(vehicleDetails?.pricing?.daily || vehicleDetails?.daily || 0),
-      cdw_per_day: cdwDetails.price,
-
-      // Booking details
-      pickup_date: bookingData.pickupDate,
-      return_date: bookingData.returnDate,
-      pickup_time: bookingData.pickupTime,
-      return_time: bookingData.returnTime,
-      pickup_location: bookingData.pickupLocation || 'Main Office',
-      return_location: bookingData.returnLocation || bookingData.pickupLocation || 'Main Office',
-      rate_type: bookingData.rateType || 'daily',
-
-      // Customer details (all required for booking)
-      title: bookingForm.title,
-      first_name: bookingForm.firstName,
-      last_name: bookingForm.lastName,
-      email: bookingForm.email,
-      phone: bookingForm.phoneNumber,
-      driving_license: bookingForm.drivingLicense || '', // Can be empty initially
-      additional_requests: bookingForm.additionalRequests || '',
-
-      // Pricing
-      total_days: totalDays,
-      base_price: (parseFloat(vehicleDetails?.pricing?.[bookingData.rateType || 'daily'] ||
-        vehicleDetails?.[bookingData.rateType || 'daily'] || 0) * totalDays),
-      cdw_total: (cdwDetails.price * totalDays),
-      weekend_surcharge: (totalPrice * 0.2),
-      tax_amount: (totalPrice * 0.06),
-      total_price: totalPrice,
-
-      // Metadata
-      added_at: new Date().toISOString(),
-      expires_at: new Date(Date.now() + 24 * 60 * 60 * 1000).toISOString(), // 24 hours
-      status: 'in_cart',
-      payment_status: 'pending',
-
-      // Images
-      image_url: vehiclePhotos[0] || '/default-car.png'
-    };
-
-    // Get existing cart
-    const existingCart = JSON.parse(localStorage.getItem(`cart_${token}`)) || [];
-
-    // Check for date conflicts (optional)
-    const hasConflict = checkDateConflict(existingCart, cartItem);
-    if (hasConflict) {
-      displayToast('error', 'This vehicle has scheduling conflict with existing items in cart');
-      return;
-    }
-
-    // Add to cart
-    const updatedCart = [...existingCart, cartItem];
-    localStorage.setItem(`cart_${token}`, JSON.stringify(updatedCart));
-
-    // Update state
-    setCartCount(updatedCart.length);
-
-    displayToast('success', 'Vehicle added to cart! Complete checkout to confirm booking.');
-
-    // Optional: Show cart notification
-    showCartNotification(cartItem.vehicle);
-
-    // Close booking form
-    setShowBookingForm(false);
-  };
-
-  // Check for date conflicts
-  const checkDateConflict = (existingItems, newItem) => {
-    const newPickup = new Date(newItem.pickup_date);
-    const newReturn = new Date(newItem.return_date);
-
-    return existingItems.some(item => {
-      if (item.vehicle_id === newItem.vehicle_id) {
-        const itemPickup = new Date(item.pickup_date);
-        const itemReturn = new Date(item.return_date);
-
-        // Check if date ranges overlap
-        return (newPickup < itemReturn && newReturn > itemPickup);
-      }
-      return false;
-    });
-  };
-
   // Show cart notification
   const showCartNotification = (vehicleName) => {
     const notification = document.createElement('div');
@@ -381,7 +184,6 @@ const VehicleDetails = () => {
       </div>
       <button onclick="this.parentElement.parentElement.remove()" class="close-notif">×</button>
     </div>
-    <a href="/cart" class="view-cart-btn">View Cart (${cartCount + 1})</a>
   `;
 
     notification.style.cssText = `
@@ -399,7 +201,6 @@ const VehicleDetails = () => {
 
     document.body.appendChild(notification);
 
-    // Auto-remove after 5 seconds
     setTimeout(() => {
       if (notification.parentElement) {
         notification.remove();
@@ -407,182 +208,147 @@ const VehicleDetails = () => {
     }, 5000);
   };
 
-  // Update the PayPal button to also add to cart after payment
-  const handlePayPalBooking = async (paymentDetails) => {
-    setIsProcessingPayment(true);
+  const addToCart = () => {
 
-    try {
-      // Generate booking ID
-      const bookingIdResponse = await generateVehicleBookingId();
-      const generatedBookingId = bookingIdResponse.bookingID;
-      setBookingId(generatedBookingId);
-
-      // Prepare booking data
-      const bookingDataForDB = {
-        bookingID: generatedBookingId,
-        vehicle: vehicleDetails?.vehicle,
-        fullName: `${bookingForm.title} ${bookingForm.firstName} ${bookingForm.lastName}`,
-        email: bookingForm.email,
-        mobile: bookingForm.phoneNumber,
-        license: bookingForm.drivingLicense || 'To be provided',
-        additionalInfo: bookingForm.additionalRequests || '',
-        pickupLoc: bookingData.pickupLocation || 'Main Office',
-        dropoffLoc: bookingData.returnLocation || bookingData.pickupLocation || 'Main Office',
-        pickupDate: bookingData.pickupDate,
-        dropoffDate: bookingData.returnDate,
-        pickupTime: bookingData.pickupTime,
-        dropoffTime: bookingData.returnTime,
-        extras: bookingData.rateType || 'Daily',
-        total: totalPrice,
-        status: 'Paid',
-        payment_method: 'paypal',
-        paypal_order_id: paymentDetails.id,
-        paypal_transaction_id: paymentDetails.purchase_units[0]?.payments?.captures[0]?.id
-      };
-
-      // Create booking
-      const bookingResponse = await createVehicleBooking(bookingDataForDB);
-
-      if (!bookingResponse.success) {
-        throw new Error('Failed to create booking record');
-      }
-
-      // Remove item from cart if it exists there
-      removeFromCartIfExists(vehicleDetails.id, bookingData.pickupDate, bookingData.returnDate);
-
-      // Show success
-      displayToast('success', `Booking confirmed! Your booking ID is: ${generatedBookingId}`);
-      setPaymentStatus('success');
-      setBookingId(generatedBookingId);
-
-      // Close modal after 3 seconds
-      setTimeout(() => {
-        setShowBookingForm(false);
-        // Navigate to confirmation page if desired
-        // navigate(`/booking-confirmation/${generatedBookingId}`);
-      }, 3000);
-
-    } catch (error) {
-      console.error('Booking error:', error);
-      displayToast('error', 'Payment successful but booking creation failed. Please contact support.');
-      setPaymentStatus('error');
-      setPaymentError(error.message);
-    } finally {
-      setIsProcessingPayment(false);
+    if (!bookingData.pickupDate || !bookingData.returnDate) {
+      displayToast('error', 'Please select pickup and return dates first');
+      return;
     }
-  };
 
-  // Remove from cart if exists
-  const removeFromCartIfExists = (vehicleId, pickupDate, returnDate) => {
-    const token = localStorage.getItem('cartToken');
-    if (!token) return;
+
+    if (!bookingForm.firstName || !bookingForm.lastName || !bookingForm.email || !bookingForm.phoneNumber) {
+      displayToast('error', 'Please fill all required personal information');
+      return;
+    }
+
+
+    let token = localStorage.getItem('cartToken');
+    if (!token) {
+      token = generateCartToken();
+      localStorage.setItem('cartToken', token);
+      localStorage.setItem(`cart_${token}`, JSON.stringify([]));
+      setCartToken(token);
+    }
+
+
+    const cartItem = {
+      id: `${vehicleDetails.id}_${Date.now()}_${Math.random().toString(36).substr(2, 5)}`,
+      vehicle_id: vehicleDetails.id,
+      vehicle: vehicleDetails.vehicle,
+      brand: vehicleDetails.brand_name || vehicleDetails.brand,
+      seats: vehicleDetails.seat || 5,
+      transmission: vehicleDetails.transmission_name || 'Automatic',
+      price_per_day: parseFloat(vehicleDetails?.pricing?.daily || vehicleDetails?.daily || 0),
+      cdw_per_day: cdwDetails.price,
+
+
+      pickup_date: bookingData.pickupDate,
+      return_date: bookingData.returnDate,
+      pickup_time: bookingData.pickupTime,
+      return_time: bookingData.returnTime,
+      pickup_location: bookingData.pickupLocation || 'Main Office',
+      return_location: bookingData.returnLocation || bookingData.pickupLocation || 'Main Office',
+      rate_type: bookingData.rateType || 'daily',
+
+
+      title: bookingForm.title,
+      first_name: bookingForm.firstName,
+      last_name: bookingForm.lastName,
+      email: bookingForm.email,
+      phone: bookingForm.phoneNumber,
+      driving_license: bookingForm.drivingLicense || '',
+      additional_requests: bookingForm.additionalRequests || '',
+
+
+      total_days: totalDays,
+      base_price: (parseFloat(vehicleDetails?.pricing?.[bookingData.rateType || 'daily'] ||
+        vehicleDetails?.[bookingData.rateType || 'daily'] || 0) * totalDays),
+      cdw_total: (cdwDetails.price * totalDays),
+      weekend_surcharge: (totalPrice * 0.2),
+      tax_amount: (totalPrice * 0.06),
+      total_price: totalPrice,
+
+
+      added_at: new Date().toISOString(),
+      expires_at: new Date(Date.now() + 24 * 60 * 60 * 1000).toISOString(), // 24 hours
+      status: 'in_cart',
+      payment_status: 'pending',
+
+
+      image_url: vehiclePhotos[0] || '/default-car.png'
+    };
+
 
     const existingCart = JSON.parse(localStorage.getItem(`cart_${token}`)) || [];
-    const updatedCart = existingCart.filter(item =>
-      !(item.vehicle_id === vehicleId &&
-        item.pickup_date === pickupDate &&
-        item.return_date === returnDate)
-    );
 
-    if (updatedCart.length !== existingCart.length) {
-      localStorage.setItem(`cart_${token}`, JSON.stringify(updatedCart));
-      setCartCount(updatedCart.length);
+
+    const hasConflict = checkDateConflict(existingCart, cartItem);
+    if (hasConflict) {
+      displayToast('error', 'This vehicle has scheduling conflict with existing items in cart');
+      return;
     }
+
+
+    const updatedCart = [...existingCart, cartItem];
+    localStorage.setItem(`cart_${token}`, JSON.stringify(updatedCart));
+
+
+    setCartCount(updatedCart.length);
+
+    displayToast('success', 'Vehicle added to cart! Complete checkout to confirm booking.');
+
+    showCartNotification(cartItem.vehicle);
+
+
+    setShowBookingForm(false);
+
+    navigate('/cart');
   };
 
-  const generateVehicleBookingId = async () => {
-    try {
-      const response = await fetch(`http://localhost:5432/bookings/generate-vehicle-id`, {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        }
-      });
+  const checkDateConflict = (existingItems, newItem) => {
+    const newPickup = new Date(newItem.pickup_date);
+    const newReturn = new Date(newItem.return_date);
 
-      if (!response.ok) {
-        throw new Error('Failed to generate booking ID');
+    return existingItems.some(item => {
+      if (item.vehicle_id === newItem.vehicle_id) {
+        const itemPickup = new Date(item.pickup_date);
+        const itemReturn = new Date(item.return_date);
+
+        return (newPickup < itemReturn && newReturn > itemPickup);
       }
-
-      return await response.json();
-    } catch (error) {
-      console.error('Error generating booking ID:', error);
-      throw error;
-    }
+      return false;
+    });
   };
-
-  const createVehicleBooking = async (bookingDataForDB) => {
-    try {
-      const response = await fetch(`http://localhost:5432/bookings/vehicle`, {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify(bookingDataForDB)
-      });
-
-      if (!response.ok) {
-        throw new Error('Failed to create booking');
-      }
-
-      return await response.json();
-    } catch (error) {
-      console.error('Error creating vehicle booking:', error);
-      throw error;
-    }
-  };
-
-  const updateVehicleBookingWithPayPal = async (bookingId, transactionData) => {
-    try {
-      const response = await fetch(`http://localhost:5432/bookings/vehicle/${bookingId}/paypal`, {
-        method: 'PATCH',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify(transactionData)
-      });
-
-      if (!response.ok) {
-        throw new Error('Failed to update booking with PayPal');
-      }
-
-      return await response.json();
-    } catch (error) {
-      console.error('Error updating booking with PayPal:', error);
-      throw error;
-    }
-  };
-
-  // Update handleFormChange to validate as user types - MOVED INSIDE COMPONENT
   const handleFormChange = (e) => {
     const { name, value } = e.target;
 
-    // Update the form state
+
     setBookingForm(prev => ({
       ...prev,
       [name]: value
     }));
 
-    // Real-time validation feedback (optional)
+
     if (name === 'email') {
       const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
       if (!emailRegex.test(value)) {
-        // You could set an error state here
+
       }
     }
 
     if (name === 'phoneNumber') {
-      // Validate phone number format
+
       if (value && !/^[\d\s\+\-\(\)]{8,}$/.test(value)) {
-        // You could set an error state here
+
       }
     }
   };
 
-  // ADD THIS FUNCTION - Same as in Product.jsx
+
   const getVehicleImage = (vehicleName) => {
     if (!vehicleName) return '/default-car.png';
 
-    // Map vehicle names to image paths (same as Product.jsx)
+
     const vehicleImageMap = {
       'Perodua Myvi': '/src/cars/Perodua Myvi.png',
       'Perodua Axia': '/src/cars/Perodua Axia.png',
@@ -600,31 +366,31 @@ const VehicleDetails = () => {
     return vehicleImageMap[vehicleName] || `/src/cars/${vehicleName.replace(/\s+/g, '_')}.png`;
   };
 
-  // Helper function to get vehicle photos
+
   const getVehiclePhotos = () => {
-    // First try to use the mapped image
+
     const mainImage = getVehicleImage(vehicleDetails?.vehicle);
 
-    // If we have photos from API, use them as additional images
+
     let additionalPhotos = [];
 
-    // Handle the photo data safely
+
     if (vehicleDetails?.photo) {
       if (Array.isArray(vehicleDetails.photo)) {
-        // If it's already an array
+
         additionalPhotos = vehicleDetails.photo.filter(photo => {
           return typeof photo === 'string' && photo.trim().length > 0;
         });
       } else if (typeof vehicleDetails.photo === 'string') {
-        // If it's a string, try to split by comma
+
         additionalPhotos = vehicleDetails.photo.split(',').map(p => p.trim()).filter(p => p.length > 0);
       }
     }
 
-    // Return array with main image first, then additional photos
+
     const allPhotos = [mainImage, ...additionalPhotos].filter(Boolean);
 
-    // Log for debugging
+
     console.log('Vehicle Photos:', allPhotos);
     console.log('Vehicle Details:', vehicleDetails);
 
@@ -673,175 +439,83 @@ const VehicleDetails = () => {
     document.body.style.overflow = 'hidden';
   };
 
-  // Add this function in your VehicleDetails component
-  const handleAddToCartWithPayment = async (paymentDetails) => {
-    console.log('Starting vehicle reservation with payment...');
-
-    const userid = localStorage.getItem('userid');
-
-    if (!userid) {
-      displayToast('error', 'Please login first');
-      return;
-    }
-
-    if (!bookingForm.firstName || !bookingForm.lastName || !bookingForm.email ||
-      !bookingForm.phoneNumber || !bookingForm.drivingLicense) {
-      displayToast('error', 'Please fill all required fields including driving license');
-      return;
-    }
-
-    if (!bookingData.pickupDate || !bookingData.returnDate) {
-      displayToast('error', 'Please select pickup and return dates');
-      return;
-    }
-
-    try {
-      const reservationData = {
-        vehicle_id: vehicleDetails.id,
-        pickup_datetime: `${bookingData.pickupDate}T${bookingData.pickupTime}:00`,
-        return_datetime: `${bookingData.returnDate}T${bookingData.returnTime}:00`,
-        pickup_location: bookingData.pickupLocation,
-        return_location: bookingData.returnLocation || bookingData.pickupLocation,
-        rate_type: bookingData.rateType || 'daily',
-        total_price: totalPrice,
-        cdw_included: true,
-        cdw_price: cdwDetails.price * totalDays,
-        customer_first_name: bookingForm.firstName,
-        customer_last_name: bookingForm.lastName,
-        customer_email: bookingForm.email,
-        customer_phone: bookingForm.phoneNumber,
-        customer_title: bookingForm.title,
-        driving_license: bookingForm.drivingLicense,
-        special_requests: bookingForm.additionalRequests || '',
-        user_id: parseInt(userid),
-        status: 'Paid', // Set to Paid since payment is complete
-        payment_method: 'PayPal',
-        payment_id: paymentDetails.id,
-        payment_status: 'COMPLETED'
-      };
-
-      // Call your API to create reservation with payment
-      const createdReservation = await createVehicleReservationWithPayment(reservationData);
-
-      if (!createdReservation || !createdReservation.reservation_id) {
-        throw new Error('Failed to create vehicle reservation');
-      }
-
-      displayToast('success', 'Vehicle booked successfully! Payment confirmed.');
-
-      return createdReservation;
-
-    } catch (error) {
-      console.error('Reservation with payment error:', error);
-      throw error;
-    }
-  };
-
-  // You'll need to create this API function
-  const createVehicleReservationWithPayment = async (reservationData) => {
-    try {
-      // You need to update this with your actual API endpoint
-      const response = await fetch(`http://localhost:5432/vehicle-reservations/pay`, {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify(reservationData)
-      });
-
-      if (!response.ok) {
-        throw new Error('Failed to create reservation');
-      }
-
-      return await response.json();
-    } catch (error) {
-      console.error('API Error:', error);
-      throw error;
-    }
-  };
-
   const calculateTotalPrice = (pickup, returnDate, rateType = 'daily') => {
     if (pickup && returnDate) {
       const start = new Date(pickup);
       const end = new Date(returnDate);
 
-      // Calculate total days
+
       const timeDiff = Math.abs(end - start);
       const days = Math.ceil(timeDiff / (1000 * 60 * 60 * 24));
 
       if (days > 0) {
         setTotalDays(days);
 
-        // Get base daily rate
+
         const baseDailyRate = parseFloat(vehicleDetails?.pricing?.daily || vehicleDetails?.daily || 0);
 
-        // Calculate discount based on rate type AND minimum days
+
         let discountMultiplier = 1.00;
         let rateDescription = 'Daily Rate';
 
-        // Check if rate type is valid for the selected days
+
         if (rateType === 'weekly') {
           if (days >= 7) {
-            discountMultiplier = 0.90; // 10% discount for weekly
+            discountMultiplier = 0.90;
             rateDescription = 'Weekly Rate (10% off)';
           } else {
-            // If less than 7 days but weekly selected, auto-downgrade to daily
+
             discountMultiplier = 1.00;
             rateDescription = 'Daily Rate (Auto-downgraded)';
           }
         } else if (rateType === 'monthly') {
           if (days >= 30) {
-            discountMultiplier = 0.80; // 20% discount for monthly
+            discountMultiplier = 0.80;
             rateDescription = 'Monthly Rate (20% off)';
           } else if (days >= 7) {
-            // If 7-29 days but monthly selected, auto-downgrade to weekly
+
             discountMultiplier = 0.90;
             rateDescription = 'Weekly Rate (Auto-downgraded)';
           } else {
-            // If less than 7 days, auto-downgrade to daily
+
             discountMultiplier = 1.00;
             rateDescription = 'Daily Rate (Auto-downgraded)';
           }
         }
 
-        // Calculate base rental amount (with discount applied)
+
         const baseRateWithoutCDW = baseDailyRate * days * discountMultiplier;
 
-        // Calculate CDW total (no discount on CDW)
+
         const cdwTotal = cdwDetails.price * days;
 
-        // Calculate weekend surcharge
         let weekendSurcharge = 0;
         let weekendDays = 0;
         let currentDate = new Date(start);
 
-        // Check each day in the rental period
         for (let i = 0; i < days; i++) {
           const dayOfWeek = currentDate.getDay();
-          // Saturday (6) or Sunday (0)
           if (dayOfWeek === 0 || dayOfWeek === 6) {
             weekendDays++;
           }
           currentDate.setDate(currentDate.getDate() + 1);
         }
 
-        // Calculate surcharge only on discounted base rate (not including CDW)
+
         if (weekendDays > 0) {
-          // Apply 20% surcharge only to weekend days
+
           const dailyDiscountedRate = (baseDailyRate * discountMultiplier);
           weekendSurcharge = dailyDiscountedRate * weekendDays * 0.2;
         }
 
-        // Calculate total base price (with CDW)
+
         const totalBasePriceWithCDW = baseRateWithoutCDW + cdwTotal;
 
-        // Calculate tax (6% SST) on everything
+
         const taxableAmount = totalBasePriceWithCDW + weekendSurcharge;
         const taxes = taxableAmount * 0.06;
 
         const finalTotal = totalBasePriceWithCDW + weekendSurcharge + taxes;
-
-        // Set states AFTER calculation
         setTotalPrice(finalTotal);
         setWeekendSurcharge(weekendSurcharge);
         setTotalBasePrice(baseRateWithoutCDW);
@@ -899,7 +573,6 @@ const VehicleDetails = () => {
     setBookingData((prev) => {
       const updatedData = { ...prev, [name]: value };
 
-      // Validate return date is after pickup date
       if (name === "pickupDate" && value && prev.returnDate) {
         const pickup = new Date(value);
         const returnDate = new Date(prev.returnDate);
@@ -907,18 +580,16 @@ const VehicleDetails = () => {
           updatedData.returnDate = "";
         }
       }
-
-      // Check if current rate type is still valid for selected dates
       if ((name === "pickupDate" || name === "returnDate") && prev.pickupDate && (prev.returnDate || value)) {
         const pickup = new Date(name === "pickupDate" ? value : prev.pickupDate);
         const returnDate = new Date(name === "returnDate" ? value : prev.returnDate);
         const daysDiff = Math.ceil((returnDate - pickup) / (1000 * 60 * 60 * 24));
 
         if (prev.rateType === 'weekly' && daysDiff < 7) {
-          // Auto-downgrade to daily if less than 7 days
+
           updatedData.rateType = 'daily';
         } else if (prev.rateType === 'monthly' && daysDiff < 30) {
-          // Auto-downgrade based on days
+
           if (daysDiff >= 7) {
             updatedData.rateType = 'weekly';
           } else {
@@ -936,71 +607,6 @@ const VehicleDetails = () => {
         name === "returnDate" ? value : bookingData.returnDate,
         bookingData.rateType || 'daily'
       );
-    }
-  };
-  // This handleFormChange is already defined above
-
-  const handleAddToCart = async (e) => {
-    e.preventDefault();
-    console.log('Starting vehicle reservation...');
-
-    const userid = localStorage.getItem('userid');
-
-    if (!userid) {
-      displayToast('error', 'Please login first');
-      return;
-    }
-
-    if (!bookingForm.firstName || !bookingForm.lastName || !bookingForm.email ||
-      !bookingForm.phoneNumber || !bookingForm.drivingLicense) {
-      displayToast('error', 'Please fill all required fields including driving license');
-      return;
-    }
-
-    if (!bookingData.pickupDate || !bookingData.returnDate) {
-      displayToast('error', 'Please select pickup and return dates');
-      return;
-    }
-
-    try {
-      const reservationData = {
-        vehicle_id: vehicleDetails.id,
-        pickup_datetime: `${bookingData.pickupDate}T${bookingData.pickupTime}:00`,
-        return_datetime: `${bookingData.returnDate}T${bookingData.returnTime}:00`,
-        pickup_location: bookingData.pickupLocation,
-        return_location: bookingData.returnLocation || bookingData.pickupLocation,
-        rate_type: bookingData.rateType || 'daily',
-        total_price: totalPrice,
-        cdw_included: true,
-        cdw_price: cdwDetails.price * totalDays,
-        customer_first_name: bookingForm.firstName,
-        customer_last_name: bookingForm.lastName,
-        customer_email: bookingForm.email,
-        customer_phone: bookingForm.phoneNumber,
-        customer_title: bookingForm.title,
-        driving_license: bookingForm.drivingLicense,
-        special_requests: bookingForm.additionalRequests || '',
-        user_id: parseInt(userid),
-        status: 'Pending'
-      };
-
-      // You'll need to update your API functions for vehicles
-      const createdReservation = await createReservation(reservationData);
-
-      if (!createdReservation || !createdReservation.reservation_id) {
-        throw new Error('Failed to create vehicle reservation');
-      }
-
-      displayToast('success', 'Vehicle reservation added to cart!');
-
-      setTimeout(() => {
-        setShowBookingForm(false);
-        navigate('/cart');
-      }, 2000);
-
-    } catch (error) {
-      console.error('Reservation error:', error);
-      displayToast('error', 'Failed to create reservation: ' + error.message);
     }
   };
 
@@ -1307,29 +913,6 @@ const VehicleDetails = () => {
                     </div>
                   </div>
 
-                  {/* CDW Information */}
-                  <div className="CDW_Container">
-                    <h2 className="CDW_text">
-                      <FaShieldAlt className="cdw-icon" />
-                      Collision Damage Waiver (CDW)
-                    </h2>
-                    <hr className="custom-line" />
-                    <div className="cdw-details">
-                      <div className="cdw-item">
-                        <FaCheckCircle className="cdw-check" />
-                        <span>CDW included in price: <strong>RM{cdwDetails.price.toFixed(2)}/day</strong></span>
-                      </div>
-                      <div className="cdw-item">
-                        <FaCheckCircle className="cdw-check" />
-                        <span>Coverage: {cdwDetails.coverage}</span>
-                      </div>
-                      <div className="cdw-item">
-                        <FaCheckCircle className="cdw-check" />
-                        <span>Excess amount: {cdwDetails.excess}</span>
-                      </div>
-                    </div>
-                  </div>
-
                   {/* Terms & Conditions */}
                   <div className="Terms_Container">
                     <h2 className="Terms_text">Terms & Conditions</h2>
@@ -1365,14 +948,13 @@ const VehicleDetails = () => {
                         <button
                           className={`rate-option ${bookingData.rateType === 'weekly' ? 'active' : ''}`}
                           onClick={() => {
-                            // If weekly selected and less than 7 days, adjust return date
+
                             if (bookingData.pickupDate) {
                               const pickup = new Date(bookingData.pickupDate);
                               const currentReturn = bookingData.returnDate ? new Date(bookingData.returnDate) : new Date(pickup);
                               const daysDiff = Math.ceil((currentReturn - pickup) / (1000 * 60 * 60 * 24));
 
                               if (daysDiff < 7) {
-                                // Set minimum 7 days for weekly rate
                                 const minReturnDate = new Date(pickup);
                                 minReturnDate.setDate(pickup.getDate() + 7);
 
@@ -1396,14 +978,12 @@ const VehicleDetails = () => {
                         <button
                           className={`rate-option ${bookingData.rateType === 'monthly' ? 'active' : ''}`}
                           onClick={() => {
-                            // If monthly selected and less than 30 days, adjust return date
                             if (bookingData.pickupDate) {
                               const pickup = new Date(bookingData.pickupDate);
                               const currentReturn = bookingData.returnDate ? new Date(bookingData.returnDate) : new Date(pickup);
                               const daysDiff = Math.ceil((currentReturn - pickup) / (1000 * 60 * 60 * 24));
 
                               if (daysDiff < 30) {
-                                // Set minimum 30 days for monthly rate
                                 const minReturnDate = new Date(pickup);
                                 minReturnDate.setDate(pickup.getDate() + 30);
 
@@ -1458,14 +1038,12 @@ const VehicleDetails = () => {
                               ? (() => {
                                 const pickup = new Date(bookingData.pickupDate);
                                 const minDate = new Date(pickup);
-
-                                // Set minimum based on rate type
                                 if (bookingData.rateType === 'weekly') {
-                                  minDate.setDate(pickup.getDate() + 7); // Min 7 days for weekly
+                                  minDate.setDate(pickup.getDate() + 7);
                                 } else if (bookingData.rateType === 'monthly') {
-                                  minDate.setDate(pickup.getDate() + 30); // Min 30 days for monthly
+                                  minDate.setDate(pickup.getDate() + 30); 
                                 } else {
-                                  minDate.setDate(pickup.getDate() + 1); // Min 1 day for daily
+                                  minDate.setDate(pickup.getDate() + 1);
                                 }
 
                                 return minDate.toISOString().split('T')[0];
@@ -1541,8 +1119,6 @@ const VehicleDetails = () => {
                         </>
                       )}
                     </div>
-
-                    <br /><br />
                     <button
                       className="reserve_button"
                       onClick={() => {

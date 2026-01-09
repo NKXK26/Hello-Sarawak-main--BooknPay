@@ -322,7 +322,7 @@ function Navbar() {
                                         to="/product"
                                         onClick={closeOffcanvas}
                                     >
-                                        Rooms
+                                        Vehicles
                                     </Link>
                                 </li>
                                 <li className="nav-item">
