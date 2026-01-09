@@ -12,6 +12,22 @@ import TawkMessenger from '../../../Component/TawkMessenger/TawkMessenger';
 import { AuthProvider } from '../../../Component/AuthContext/AuthContext';
 import Sorting from '../../../Component/Sorting/Sorting';
 
+//image
+// Import all car images at the top of your Product.jsx
+import PeroduaMyvi from '../../../public/Perodua Myvi.png';
+import PeroduaAxia from '../../../public/Perodua Axia.png';
+import HondaCity from '../../../public/Honda City.png';
+import ToyotaVios from '../../../public/Toyota Vios.png';
+import ProtonSaga from '../../../public/Proton Saga.png';
+import PeroduaAlza from '../../../public/Perodua Alza.png';
+import PeroduaBezza from '../../../public/Perodua Bezza.png';
+import PeroduaMyviNew from '../../../public/Perodua Myvi (New).png';
+import ToyotaFortuner from '../../../public/Toyota Fortuner.png';
+import PeroduaAlzaNew from '../../../public/Perodua Alza (New).png';
+import ToyotaSienta from '../../../public/Toyota Sienta.png';
+import PeroduaAruz from '../../../public/Perodua Aruz.png';
+import NissanUrvan from '../../../public/Nissan Urvan NV350.png';
+import DefaultCar from '../../../public/default-car.png';
 // Import API
 import { fetchProduct } from '../../../../Api/api';
 
@@ -630,37 +646,39 @@ const Product = () => {
                     const isLast = vehicles.length === index + 1;
                     const dailyPrice = vehicle.pricing?.daily || vehicle.daily || 0;
                     const getVehicleImage = (vehicleName) => {
+                      if (!vehicleName) return DefaultCar;
 
-                      // Use lowercase and consistent naming
                       const vehicleNameLower = vehicleName.toLowerCase().trim();
 
-                      // Map vehicle names to image paths - use relative paths from public folder
+                      // Map to imported image references (not string paths)
                       const vehicleImageMap = {
-                        'perodua myvi': '../../../public/Perodua Myvi.png',
-                        'perodua axia': '../../../public/Perodua Axia.png',
-                        'honda city': '../../../public/Honda City.png',
-                        'toyota vios': '../../../public/Toyota Vios.png',
-                        'proton saga': '../../../public/Proton Saga.png',
-                        'perodua alza': '../../../public/Perodua Alza.png',
-                        'perodua bezza': '../../../public/Perodua Bezza.png',
-                        'perodua myvi (new)': '../../../public/Perodua Myvi (New).png',
-                        'toyota fortuner': '../../../public/Toyota Fortuner.png',
-                        'perodua alza (new)': '../../../public/Perodua Alza (New).png',
-                        'toyota sienta': '../../../public/Toyota Sienta.png',
-                        'perodua aruz': '../../../public/Perodua Aruz.png',
-                        'nissan urvan nv350': '../../../public/Nissan Urvan NV350.png',
+                        'perodua myvi': PeroduaMyvi,
+                        'perodua axia': PeroduaAxia,
+                        'honda city': HondaCity,
+                        'toyota vios': ToyotaVios,
+                        'proton saga': ProtonSaga,
+                        'perodua alza': PeroduaAlza,
+                        'perodua bezza': PeroduaBezza,
+                        'perodua myvi (new)': PeroduaMyviNew,
+                        'toyota fortuner': ToyotaFortuner,
+                        'perodua alza (new)': PeroduaAlzaNew,
+                        'toyota sienta': ToyotaSienta,
+                        'perodua aruz': PeroduaAruz,
+                        'nissan urvan nv350': NissanUrvan,
                       };
 
-                      // Try exact match first, then check for partial matches
+                      // Try exact match first
                       const exactMatch = vehicleImageMap[vehicleNameLower];
                       if (exactMatch) return exactMatch;
 
-                      // Check for partial matches (e.g., "Myvi" in "Perodua Myvi 2023")
+                      // Check for partial matches
                       for (const [key, value] of Object.entries(vehicleImageMap)) {
                         if (vehicleNameLower.includes(key)) {
                           return value;
                         }
                       }
+
+                      return DefaultCar;
                     };
                     return (
                       <div
