@@ -14,6 +14,22 @@ import './PropertyDetails.css';
 import { createReservation, requestBooking, getCoordinates, fetchUserData, checkDateOverlap } from '../../../../Api/api';
 import { PayPalScriptProvider, PayPalButtons } from "@paypal/react-paypal-js";
 
+// Import all vehicle images
+import PeroduaMyvi from '../../../public/Perodua Myvi.png';
+import PeroduaAxia from '../../../public/Perodua Axia.png';
+import HondaCity from '../../../public/Honda City.png';
+import ToyotaVios from '../../../public/Toyota Vios.png';
+import ProtonSaga from '../../../public/Proton Saga.png';
+import PeroduaAlza from '../../../public/Perodua Alza.png';
+import PeroduaBezza from '../../../public/Perodua Bezza.png';
+import PeroduaMyviNew from '../../../public/Perodua Myvi (New).png';
+import ToyotaFortuner from '../../../public/Toyota Fortuner.png';
+import ToyotaSienta from '../../../public/Toyota Sienta.png';
+import PeroduaAlzaNew from '../../../public/Perodua Alza (New).png';
+import PeroduaAruz from '../../../public/Perodua Aruz.png';
+import NissanUrvan from '../../../public/Nissan Urvan NV350.png';
+import DefaultCar from '../../../public/default-car.png';
+
 const VehicleDetails = () => {
   const [weekendSurcharge, setWeekendSurcharge] = useState(0);
   const [totalBasePrice, setTotalBasePrice] = useState(0);
@@ -275,7 +291,7 @@ const VehicleDetails = () => {
       payment_status: 'pending',
 
 
-      image_url: vehiclePhotos[0] || '/default-car.png'
+      image_url: vehiclePhotos[0] || DefaultCar
     };
 
 
@@ -346,24 +362,39 @@ const VehicleDetails = () => {
 
 
   const getVehicleImage = (vehicleName) => {
-    if (!vehicleName) return '/default-car.png';
+    if (!vehicleName) return DefaultCar;
 
+    const vehicleNameLower = vehicleName.toLowerCase().trim();
 
+    // Map to imported image references
     const vehicleImageMap = {
-      'Perodua Myvi': '/src/cars/Perodua Myvi.png',
-      'Perodua Axia': '/src/cars/Perodua Axia.png',
-      'Honda City': '/src/cars/Honda City.png',
-      'Toyota Vios': '/src/cars/Toyota Vios.png',
-      'Proton Saga': '/src/cars/Proton Saga.png',
-      'Perodua Alza': '/src/cars/Perodua Alza.png',
-      'Perodua Bezza': '/src/cars/Perodua Bezza.png',
-      'Perodua Myvi (New)': '/src/cars/Perodua Myvi (New).png',
-      'Toyota Fortuner': '/src/cars/Toyota Fortuner.png',
-      'Toyota Sienta': '/src/cars/Toyota Sienta.png',
-      'Perodua Alza (New)': '/src/cars/Perodua Alza (New).png',
+      'perodua myvi': PeroduaMyvi,
+      'perodua axia': PeroduaAxia,
+      'honda city': HondaCity,
+      'toyota vios': ToyotaVios,
+      'proton saga': ProtonSaga,
+      'perodua alza': PeroduaAlza,
+      'perodua bezza': PeroduaBezza,
+      'perodua myvi (new)': PeroduaMyviNew,
+      'toyota fortuner': ToyotaFortuner,
+      'toyota sienta': ToyotaSienta,
+      'perodua alza (new)': PeroduaAlzaNew,
+      'perodua aruz': PeroduaAruz,
+      'nissan urvan nv350': NissanUrvan,
     };
 
-    return vehicleImageMap[vehicleName] || `/src/cars/${vehicleName.replace(/\s+/g, '_')}.png`;
+    // Try exact match first
+    const exactMatch = vehicleImageMap[vehicleNameLower];
+    if (exactMatch) return exactMatch;
+    
+    // Check for partial matches
+    for (const [key, value] of Object.entries(vehicleImageMap)) {
+      if (vehicleNameLower.includes(key)) {
+        return value;
+      }
+    }
+    
+    return DefaultCar;
   };
 
 
@@ -1273,7 +1304,7 @@ const VehicleDetails = () => {
                     <div className="booking-right">
                       <div className="vehicle-card">
                         <img
-                          src={vehiclePhotos[0] || '/default-car.png'}
+                          src={vehiclePhotos[0] || DefaultCar}
                           alt={vehicleDetails?.vehicle}
                         />
                         <div className="vehicle-info">
