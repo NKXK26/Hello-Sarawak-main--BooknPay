@@ -636,19 +636,19 @@ const Product = () => {
 
                       // Map vehicle names to image paths - use relative paths from public folder
                       const vehicleImageMap = {
-                        'perodua myvi': '/src/cars/Perodua Myvi.png',
-                        'perodua axia': '/src/cars/Perodua Axia.png',
-                        'honda city': '/src/cars/Honda City.png',
-                        'toyota vios': '/src/cars/Toyota Vios.png',
-                        'proton saga': '/src/cars/Proton Saga.png',
-                        'perodua alza': '/src/cars/Perodua Alza.png',
-                        'perodua bezza': '/src/cars/Perodua Bezza.png',
-                        'perodua myvi (new)': '/src/cars/Perodua Myvi (New).png',
-                        'toyota fortuner': '/src/cars/ToyotaFortuner.png',
-                        'perodua alza (new)': '/src/cars/PeroduaAlza (New).png',
-                        'toyota sienta': '/src/cars/Toyota Sienta.png',
-                        'perodua aruz': '/src/cars/Perodua Aruz.png',
-                        'nissan urvan nv350': '/src/cars/Nissan Urvan NV350.png',
+                        'perodua myvi': '/cars/Perodua Myvi.png',
+                        'perodua axia': '/cars/Perodua Axia.png',
+                        'honda city': '/cars/Honda City.png',
+                        'toyota vios': '/cars/Toyota Vios.png',
+                        'proton saga': '/cars/Proton Saga.png',
+                        'perodua alza': '/cars/Perodua Alza.png',
+                        'perodua bezza': '/cars/Perodua Bezza.png',
+                        'perodua myvi (new)': '/cars/Perodua Myvi (New).png',
+                        'toyota fortuner': '/cars/Toyota Fortuner.png',
+                        'perodua alza (new)': '/cars/Perodua Alza (New).png',
+                        'toyota sienta': '/cars/Toyota Sienta.png',
+                        'perodua aruz': '/cars/Perodua Aruz.png',
+                        'nissan urvan nv350': '/cars/Nissan Urvan NV350.png',
                       };
 
                       // Try exact match first, then check for partial matches
