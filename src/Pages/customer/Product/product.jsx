@@ -630,8 +630,6 @@ const Product = () => {
                     const isLast = vehicles.length === index + 1;
                     const dailyPrice = vehicle.pricing?.daily || vehicle.daily || 0;
                     const getVehicleImage = (vehicleName) => {
-                      if (!vehicleName) return '/default-car.png';
-
                       // Use lowercase and consistent naming
                       const vehicleNameLower = vehicleName.toLowerCase().trim();
 
