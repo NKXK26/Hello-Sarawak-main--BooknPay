@@ -632,24 +632,36 @@ const Product = () => {
                     const getVehicleImage = (vehicleName) => {
                       if (!vehicleName) return '/default-car.png';
 
-                      // Map vehicle names to image paths
+                      // Use lowercase and consistent naming
+                      const vehicleNameLower = vehicleName.toLowerCase().trim();
+
+                      // Map vehicle names to image paths - use relative paths from public folder
                       const vehicleImageMap = {
-                        'Perodua Myvi': '/src/cars/Perodua Myvi.png',
-                        'Perodua Axia': '/src/cars/Perodua Axia.png',
-                        'Honda City': '/src/cars/Honda City.png',
-                        'Toyota Vios': '/src/cars/Toyota Vios.png',
-                        'Proton Saga': '/src/cars/Proton Saga.png',
-                        'Perodua Alza': '/src/cars/Perodua Alza.png',
-                        'Perodua Bezza': '/src/cars/Perodua Bezza.png',
-                        'Perodua Myvi (New)': '/src/cars/Perodua Myvi (New).png',
-                        'Toyota Fortuner': '/src/cars/Toyota Fortuner.png',
-                        'Perodua Alza (New)': '/src/cars/Perodua Alza (New).png',
-                        'Toyota Sienta': '/src/cars/Toyota Sienta.png',
-                        'Perodua Aruz': '/src/cars/Perodua Aruz.png',
-                        'Nissan Urvan NV350': '/src/cars/Nissan Urvan NV350.png',
+                        'perodua myvi': '/src/cars/Perodua Myvi.png',
+                        'perodua axia': '/src/cars/Perodua Axia.png',
+                        'honda city': '/src/cars/Honda City.png',
+                        'toyota vios': '/src/cars/Toyota Vios.png',
+                        'proton saga': '/src/cars/Proton Saga.png',
+                        'perodua alza': '/src/cars/Perodua Alza.png',
+                        'perodua bezza': '/src/cars/Perodua Bezza.png',
+                        'perodua myvi (new)': '/src/cars/Perodua Myvi (New).png',
+                        'toyota fortuner': '/src/cars/ToyotaFortuner.png',
+                        'perodua alza (new)': '/src/cars/PeroduaAlza (New).png',
+                        'toyota sienta': '/src/cars/Toyota Sienta.png',
+                        'perodua aruz': '/src/cars/Perodua Aruz.png',
+                        'nissan urvan nv350': '/src/cars/Nissan Urvan NV350.png',
                       };
 
-                      return vehicleImageMap[vehicleName] || `/src/cars/${vehicleName.replace(/\s+/g, '_')}.png`;
+                      // Try exact match first, then check for partial matches
+                      const exactMatch = vehicleImageMap[vehicleNameLower];
+                      if (exactMatch) return exactMatch;
+
+                      // Check for partial matches (e.g., "Myvi" in "Perodua Myvi 2023")
+                      for (const [key, value] of Object.entries(vehicleImageMap)) {
+                        if (vehicleNameLower.includes(key)) {
+                          return value;
+                        }
+                      }
                     };
                     return (
                       <div
@@ -662,11 +674,6 @@ const Product = () => {
                           <img
                             src={getVehicleImage(vehicle.vehicle)}
                             alt={vehicle.vehicle}
-                            className="vehicle-image"
-                            onError={(e) => {
-                              e.target.src = '/default-car.png';
-                              e.target.alt = 'Default vehicle image';
-                            }}
                           />
                         </div>
                         <div className="tour-property-info">
