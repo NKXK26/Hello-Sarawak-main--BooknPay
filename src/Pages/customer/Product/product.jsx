@@ -636,19 +636,19 @@ const Product = () => {
 
                       // Map vehicle names to image paths - use relative paths from public folder
                       const vehicleImageMap = {
-                        'perodua myvi': '/src/public/Perodua Myvi.png',
-                        'perodua axia': '/src/public/Perodua Axia.png',
-                        'honda city': '/src/public/Honda City.png',
-                        'toyota vios': '/src/public/Toyota Vios.png',
-                        'proton saga': '/src/public/Proton Saga.png',
-                        'perodua alza': '/src/public/Perodua Alza.png',
-                        'perodua bezza': '/src/public/Perodua Bezza.png',
-                        'perodua myvi (new)': '/src/public/Perodua Myvi (New).png',
-                        'toyota fortuner': '/src/public/Toyota Fortuner.png',
-                        'perodua alza (new)': '/src/public/Perodua Alza (New).png',
-                        'toyota sienta': '/src/public/Toyota Sienta.png',
-                        'perodua aruz': '/src/public/Perodua Aruz.png',
-                        'nissan urvan nv350': '/src/public/Nissan Urvan NV350.png',
+                        'perodua myvi': '/public/Perodua Myvi.png',
+                        'perodua axia': '/public/Perodua Axia.png',
+                        'honda city': '/public/Honda City.png',
+                        'toyota vios': '/public/Toyota Vios.png',
+                        'proton saga': '/public/Proton Saga.png',
+                        'perodua alza': '/public/Perodua Alza.png',
+                        'perodua bezza': '/public/Perodua Bezza.png',
+                        'perodua myvi (new)': '/public/Perodua Myvi (New).png',
+                        'toyota fortuner': '/public/Toyota Fortuner.png',
+                        'perodua alza (new)': '/public/Perodua Alza (New).png',
+                        'toyota sienta': '/public/Toyota Sienta.png',
+                        'perodua aruz': '/public/Perodua Aruz.png',
+                        'nissan urvan nv350': '/public/Nissan Urvan NV350.png',
                       };
 
                       // Try exact match first, then check for partial matches
