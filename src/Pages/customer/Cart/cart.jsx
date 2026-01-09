@@ -17,7 +17,7 @@ import Navbar from '../../../Component/Navbar/navbar';
 import Footer from '../../../Component/Footer/footer';
 import Toast from '../../../Component/Toast/Toast';
 import { PayPalScriptProvider, PayPalButtons } from "@paypal/react-paypal-js";
-import './Cart.css';
+import './cart.css';
 
 const Cart = () => {
   const [cartItems, setCartItems] = useState([]);
