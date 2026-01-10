@@ -14,7 +14,7 @@ export const signupUser = async (userData) => {
     return response;
   } catch (error) {
     console.error('API error:', error);
-    throw error; 
+    throw error;
   }
 };
 
@@ -32,7 +32,7 @@ export const loginUser = async (userData) => {
     return response;
   } catch (error) {
     console.error('API error:', error);
-    throw error; 
+    throw error;
   }
 };
 
@@ -44,7 +44,7 @@ export const checkstatus = async (userid) => {
     return response;
   } catch (error) {
     console.error('API error:', error);
-    throw error; 
+    throw error;
   }
 };
 
@@ -61,7 +61,7 @@ export const logoutUser = async (userid) => {
 
     const responseData = await response.json();
     return responseData;
-  }catch (error) {
+  } catch (error) {
     console.error('API error:', error);
     throw error;
   }
@@ -70,36 +70,53 @@ export const logoutUser = async (userid) => {
 // Properties Listing
 export const propertiesListing = async (propertyData) => {
   const usergroup = localStorage.getItem("usergroup");
-  
+
   try {
     const response = await fetch(`${API_URL}/propertiesListing`, {
       method: 'POST',
       body: propertyData,
     });
 
-    if(!response.ok) {
+    if (!response.ok) {
       const errorData = await response.json();
       throw new Error(errorData.error || 'Failed to create property');
     }
 
     const responseData = await response.json();
     return responseData;
-  }catch (error) {
+  } catch (error) {
     console.error('API error: ', error);
     throw error;
   }
 };
 
-// In your api.js file
+
 export const fetchProduct = async () => {
   try {
-    const response = await fetch('http://localhost:5432/product'); // or your API URL
+    const API_URL = import.meta.env.VITE_API_URL;
+
+    // Construct the full URL
+    const apiEndpoint = `${API_URL}product`;
+
+    console.log('Fetching from:', apiEndpoint); // Debug log
+
+    const response = await fetch(apiEndpoint, {
+      method: 'GET',
+      headers: {
+        'Content-Type': 'application/json',
+      },
+    });
+
+    if (!response.ok) {
+      throw new Error(`HTTP error! status: ${response.status}`);
+    }
+
     const data = await response.json();
-    
-    console.log('API Response:', data); // Check this in console
-    
+
+    console.log('API Response:', data);
+
     if (data.success) {
-      return data.data; // Returns array of vehicles
+      return data.data;
     }
     return [];
   } catch (error) {
@@ -110,8 +127,8 @@ export const fetchProduct = async () => {
 
 // Fetch Properties (Dashboard)
 export const fetchPropertiesListingTable = async () => {
-  const username = localStorage.getItem('username'); 
-  
+  const username = localStorage.getItem('username');
+
   try {
     const response = await fetch(`${API_URL}/propertiesListingTable?username=${username}`);
 
@@ -120,7 +137,7 @@ export const fetchPropertiesListingTable = async () => {
     }
 
     const data = await response.json();
-    return data; 
+    return data;
   } catch (error) {
     console.error('Error fetching properties', error);
     throw error;
@@ -131,15 +148,15 @@ export const fetchPropertiesListingTable = async () => {
 export const updateProperty = async (propertyData, propertyid) => {
   const creatorid = localStorage.getItem("userid");
   const creatorUsername = localStorage.getItem("username");
-  
+
   if (!propertyid || propertyid === 'undefined') {
     throw new Error('propertyid invalid');
   }
-  
+
   try {
     const response = await fetch(`${API_URL}/propertiesListing/${propertyid}?creatorid=${creatorid}&creatorUsername=${creatorUsername}`, {
       method: 'PUT',
-      body: propertyData, 
+      body: propertyData,
     });
 
     if (!response.ok) {
@@ -158,7 +175,7 @@ export const updateProperty = async (propertyData, propertyid) => {
 export const updatePropertyStatus = async (propertyid, status) => {
   const creatorid = localStorage.getItem("userid");
   const creatorUsername = localStorage.getItem("username");
-  
+
   try {
     const response = await fetch(`${API_URL}/updatePropertyStatus/${propertyid}?creatorid=${creatorid}&creatorUsername=${creatorUsername}`, {
       method: 'PATCH',
@@ -181,7 +198,7 @@ export const updatePropertyStatus = async (propertyid, status) => {
 export const deleteProperty = async (propertyid) => {
   const creatorid = localStorage.getItem("userid");
   const creatorUsername = localStorage.getItem("username");
-  
+
   try {
     const response = await fetch(`${API_URL}/removePropertiesListing/${propertyid}?creatorid=${creatorid}&creatorUsername=${creatorUsername}`, {
       method: 'DELETE',
@@ -202,7 +219,7 @@ export const deleteProperty = async (propertyid) => {
 // Fetch Customers
 export const fetchCustomers = async () => {
   const userid = localStorage.getItem("userid");
-  
+
   try {
     const response = await fetch(`${API_URL}/users/customers?userid=${userid}`);
 
@@ -236,7 +253,7 @@ export const fetchOwners = async () => {
 // Fetch Moderators
 export const fetchModerators = async () => {
   const userid = localStorage.getItem("userid");
-  
+
   try {
     const response = await fetch(`${API_URL}/users/moderators?userid=${userid}`);
 
@@ -301,7 +318,7 @@ export const createModerator = async (userData) => {
     return response;
   } catch (error) {
     console.error('API error:', error);
-    throw error; 
+    throw error;
   }
 };
 
@@ -321,7 +338,7 @@ export const updateUser = async (userData, userid) => {
     if (!response.ok) {
       try {
         const errorText = await response.text();
-        
+
         let errorData;
         try {
           errorData = JSON.parse(errorText);
@@ -354,7 +371,7 @@ export const updateUser = async (userData, userid) => {
 export const removeUser = async (userid) => {
   const creatorid = localStorage.getItem("userid");
   const creatorUsername = localStorage.getItem("username");
-  
+
   try {
     const response = await fetch(`${API_URL}/users/removeUser/${userid}?creatorid=${creatorid}&creatorUsername=${creatorUsername}`, {
       method: 'DELETE',
@@ -375,7 +392,7 @@ export const removeUser = async (userid) => {
 export const suspendUser = async (userid) => {
   const creatorid = localStorage.getItem("userid");
   const creatorUsername = localStorage.getItem("username");
-  
+
   try {
     const response = await fetch(`${API_URL}/users/suspendUser/${userid}?creatorid=${creatorid}&creatorUsername=${creatorUsername}`, {
       method: 'PUT',
@@ -396,7 +413,7 @@ export const suspendUser = async (userid) => {
 export const activateUser = async (userid) => {
   const creatorid = localStorage.getItem("userid");
   const creatorUsername = localStorage.getItem("username");
-  
+
   try {
     const response = await fetch(`${API_URL}/users/activateUser/${userid}?creatorid=${creatorid}&creatorUsername=${creatorUsername}`, {
       method: 'PUT',
@@ -435,7 +452,7 @@ export const sendContactEmail = async (emailData) => {
 export const requestBooking = async (reservationid) => {
   const creatorid = localStorage.getItem("userid");
   const creatorUsername = localStorage.getItem("username");
-  
+
   try {
     const response = await fetch(`${API_URL}/requestBooking/${reservationid}?creatorid=${creatorid}&creatorUsername=${creatorUsername}`, {
       method: 'POST',
@@ -444,13 +461,13 @@ export const requestBooking = async (reservationid) => {
       },
     });
 
-    if(!response) {
+    if (!response) {
       const errorData = await response.json();
       throw new Error(errorData.message || 'Failed to send booking request notification');
     }
 
     return await response.json();
-  }catch (error) {
+  } catch (error) {
     console.error('API error: ', error);
     throw error;
   }
@@ -460,7 +477,7 @@ export const requestBooking = async (reservationid) => {
 export const acceptBooking = async (reservationid) => {
   const creatorid = localStorage.getItem("userid");
   const creatorUsername = localStorage.getItem("username");
-  
+
   try {
     const response = await fetch(`${API_URL}/accept_booking/${reservationid}?creatorid=${creatorid}&creatorUsername=${creatorUsername}`, {
       method: 'POST',
@@ -475,7 +492,7 @@ export const acceptBooking = async (reservationid) => {
     }
 
     return await response.json();
-  }catch (error) {
+  } catch (error) {
     console.error('API error: ', error);
     throw error;
   }
@@ -485,7 +502,7 @@ export const acceptBooking = async (reservationid) => {
 export const suggestNewRoom = async (propertyid, reservationid) => {
   const creatorid = localStorage.getItem("userid");
   const creatorUsername = localStorage.getItem("username");
-  
+
   try {
     const response = await fetch(`${API_URL}/suggestNewRoom/${propertyid}/${reservationid}?creatorid=${creatorid}&creatorUsername=${creatorUsername}`, {
       method: 'POST',
@@ -510,7 +527,7 @@ export const suggestNewRoom = async (propertyid, reservationid) => {
 export const propertyListingRequest = async (propertyid) => {
   const creatorid = localStorage.getItem("userid");
   const creatorUsername = localStorage.getItem("username");
-  
+
   try {
     const response = await fetch(`${API_URL}/propertyListingRequest/${propertyid}?creatorid=${creatorid}&creatorUsername=${creatorUsername}`, {
       method: 'POST',
@@ -519,13 +536,13 @@ export const propertyListingRequest = async (propertyid) => {
       },
     });
 
-    if(!response) {
+    if (!response) {
       const errorData = await response.json();
       throw new Error(errorData.message || 'Failed to send property listing request notification');
     }
 
     return await response.json();
-  }catch (error) {
+  } catch (error) {
     console.error('API error: ', error);
     throw error;
   }
@@ -535,7 +552,7 @@ export const propertyListingRequest = async (propertyid) => {
 export const propertyListingAccept = async (propertyid) => {
   const creatorid = localStorage.getItem("userid");
   const creatorUsername = localStorage.getItem("username");
-  
+
   try {
     const response = await fetch(`${API_URL}/propertyListingAccept/${propertyid}?creatorid=${creatorid}&creatorUsername=${creatorUsername}`, {
       method: 'POST',
@@ -544,13 +561,13 @@ export const propertyListingAccept = async (propertyid) => {
       },
     });
 
-    if(!response) {
+    if (!response) {
       const errorData = await response.json();
       throw new Error(errorData.message || 'Failed to send property listing request accepted notification');
     }
 
     return await response.json();
-  }catch (error) {
+  } catch (error) {
     console.error('API error: ', error);
     throw error;
   }
@@ -560,7 +577,7 @@ export const propertyListingAccept = async (propertyid) => {
 export const propertyListingReject = async (propertyid) => {
   const creatorid = localStorage.getItem("userid");
   const creatorUsername = localStorage.getItem("username");
-  
+
   try {
     const response = await fetch(`${API_URL}/propertyListingReject/${propertyid}?creatorid=${creatorid}&creatorUsername=${creatorUsername}`, {
       method: 'POST',
@@ -569,13 +586,13 @@ export const propertyListingReject = async (propertyid) => {
       },
     });
 
-    if(!response) {
+    if (!response) {
       const errorData = await response.json();
       throw new Error(errorData.message || 'Failed to send property listing request rejected notification');
     }
 
     return await response.json();
-  }catch (error) {
+  } catch (error) {
     console.error('API error: ', error);
     throw error;
   }
@@ -585,7 +602,7 @@ export const propertyListingReject = async (propertyid) => {
 export const sendSuggestNotification = async (reservationid, selectedOperators) => {
   const creatorid = localStorage.getItem("userid");
   const creatorUsername = localStorage.getItem("username");
-  
+
   try {
     const response = await fetch(`${API_URL}/sendSuggestNotification/${reservationid}?creatorid=${creatorid}&creatorUsername=${creatorUsername}`, {
       method: 'POST',
@@ -593,11 +610,11 @@ export const sendSuggestNotification = async (reservationid, selectedOperators) 
         'Content-Type': 'application/json',
       },
       body: JSON.stringify({
-        userids: selectedOperators,  
-    }),
+        userids: selectedOperators,
+      }),
     });
 
-    if(!response) {
+    if (!response) {
       const errorData = await response.json();
       throw new Error(errorData.message || 'Failed to send suggest notification');
     }
@@ -613,7 +630,7 @@ export const sendSuggestNotification = async (reservationid, selectedOperators) 
 export const sendPickedUpNotification = async (reservationid) => {
   const creatorid = localStorage.getItem("userid");
   const creatorUsername = localStorage.getItem("username");
-  
+
   try {
     const response = await fetch(`${API_URL}/sendPickedUpNotification/${reservationid}?creatorid=${creatorid}&creatorUsername=${creatorUsername}`, {
       method: 'POST',
@@ -622,7 +639,7 @@ export const sendPickedUpNotification = async (reservationid) => {
       },
     });
 
-    if(!response) {
+    if (!response) {
       const errorData = await response.json();
       throw new Error(errorData.message || 'Failed to send picked up notification');
     }
@@ -638,7 +655,7 @@ export const sendPickedUpNotification = async (reservationid) => {
 export const rejectSuggestedRoom = async (propertyid) => {
   const creatorid = localStorage.getItem("userid");
   const creatorUsername = localStorage.getItem("username");
-  
+
   try {
     const response = await fetch(`${API_URL}/reject_suggested_room/${propertyid}?creatorid=${creatorid}&creatorUsername=${creatorUsername}`, {
       method: 'POST',
@@ -664,14 +681,14 @@ export const createReservation = async (reservationData) => {
   const userid = localStorage.getItem('userid');
   const creatorid = localStorage.getItem("userid");
   const creatorUsername = localStorage.getItem("username");
-  
+
   try {
     if (!userid) {
       throw new Error('User not logged in. Please log in to create a reservation.');
     }
 
     const reservationWithuserid = { ...reservationData, userid };
-    
+
     const response = await fetch(`${API_URL}/reservation/${userid}?creatorid=${creatorid}&creatorUsername=${creatorUsername}`, {
       method: 'POST',
       headers: {
@@ -706,7 +723,7 @@ export const createReservation = async (reservationData) => {
 // Fetch all Reservations
 export const fetchReservation = async () => {
   const username = localStorage.getItem('username');
-  
+
   try {
     if (!username) {
       throw new Error('Username is not found in localStorage. Please log in.');
@@ -729,7 +746,7 @@ export const fetchReservation = async () => {
 // Update reservation status
 export const updateReservationStatus = async (reservationid, status) => {
   const userid = localStorage.getItem("userid");
-  
+
   try {
     const response = await fetch(`${API_URL}/updateReservationStatus/${reservationid}?userid=${userid}`, {
       method: 'PATCH',
@@ -751,20 +768,20 @@ export const updateReservationStatus = async (reservationid, status) => {
 // Cart
 export const fetchCart = async () => {
   const userid = localStorage.getItem('userid');
-  
-  try {
-      const response = await fetch(`${API_URL}/cart?userid=${userid}`);
-    
-      if (!response.ok) {
-          throw new Error('Failed to fetch reservations');
-      }
 
-      const data = await response.json();
-      
-      return data.reservations;
+  try {
+    const response = await fetch(`${API_URL}/cart?userid=${userid}`);
+
+    if (!response.ok) {
+      throw new Error('Failed to fetch reservations');
+    }
+
+    const data = await response.json();
+
+    return data.reservations;
   } catch (error) {
-      console.error('API error:', error);
-      throw error;
+    console.error('API error:', error);
+    throw error;
   }
 };
 
@@ -772,11 +789,11 @@ export const fetchCart = async () => {
 export const getPropertyOwnerPayPalId = async (propertyId) => {
   try {
     const response = await fetch(`${API_URL}/property/owner-paypal/${propertyId}`);
-    
+
     if (!response.ok) {
       throw new Error('Failed to fetch property owner PayPal ID');
     }
-    
+
     const data = await response.json();
 
     return {
@@ -793,7 +810,7 @@ export const getPropertyOwnerPayPalId = async (propertyId) => {
 export const removeReservation = async (reservationid) => {
   const creatorid = localStorage.getItem("userid");
   const creatorUsername = localStorage.getItem("username");
-  
+
   try {
     const response = await fetch(`${API_URL}/removeReservation/${reservationid}?creatorid=${creatorid}&creatorUsername=${creatorUsername}`, {
       method: 'DELETE',
@@ -822,7 +839,7 @@ export const fetchBookLog = async (userid) => {
     const data = await response.json();
 
 
-    return data; 
+    return data;
   } catch (error) {
     console.error('API error fetching book logs:', error);
     throw error;
@@ -832,84 +849,84 @@ export const fetchBookLog = async (userid) => {
 // Fetch Finance 
 export const fetchFinance = async (userid) => {
   try {
-      const response = await fetch(`${API_URL}/users/finance?userid=${userid}`);
-      const data = await response.json();
-      return data; 
+    const response = await fetch(`${API_URL}/users/finance?userid=${userid}`);
+    const data = await response.json();
+    return data;
   } catch (error) {
-      console.error('API error:', error);
-      throw error;
+    console.error('API error:', error);
+    throw error;
   }
 };
 
 // Fetch Occupancy Rate
 export const fetchOccupancyRate = async (userid) => {
   try {
-      const response = await fetch(`${API_URL}/users/occupancy_rate?userid=${userid}`);
-      const data = await response.json();
-      return data; 
+    const response = await fetch(`${API_URL}/users/occupancy_rate?userid=${userid}`);
+    const data = await response.json();
+    return data;
   } catch (error) {
-      console.error('API error:', error);
-      throw error;
+    console.error('API error:', error);
+    throw error;
   }
 };
 
 // Fetch Reservation per Available Room
 export const fetchRevPAR = async (userid) => {
   try {
-      const response = await fetch(`${API_URL}/users/RevPAR?userid=${userid}`);
-      const data = await response.json();
-      return data; 
+    const response = await fetch(`${API_URL}/users/RevPAR?userid=${userid}`);
+    const data = await response.json();
+    return data;
   } catch (error) {
-      console.error('API error:', error);
-      throw error;
+    console.error('API error:', error);
+    throw error;
   }
 };
 
 // Fetch Cancellation Rate
 export const fetchCancellationRate = async (userid) => {
   try {
-      const response = await fetch(`${API_URL}/users/cancellation_rate?userid=${userid}`);
-      const data = await response.json();
-      return data; 
+    const response = await fetch(`${API_URL}/users/cancellation_rate?userid=${userid}`);
+    const data = await response.json();
+    return data;
   } catch (error) {
-      console.error('API error:', error);
-      throw error;
+    console.error('API error:', error);
+    throw error;
   }
 };
 
 // Fetch Customer Retention Rate
 export const fetchCustomerRetentionRate = async (userid) => {
   try {
-      const response = await fetch(`${API_URL}/users/customer_retention_rate?userid=${userid}`);
-      const data = await response.json();
-      return data; 
+    const response = await fetch(`${API_URL}/users/customer_retention_rate?userid=${userid}`);
+    const data = await response.json();
+    return data;
   } catch (error) {
-      console.error('API error:', error);
-      throw error;
+    console.error('API error:', error);
+    throw error;
   }
 };
 
 // Fetch Guest Satisfaction Score
 export const fetchGuestSatisfactionScore = async (userid) => {
   try {
-      const response = await fetch(`${API_URL}/users/guest_satisfaction_score?userid=${userid}`);
-      const data = await response.json();
-      return data; 
+    const response = await fetch(`${API_URL}/users/guest_satisfaction_score?userid=${userid}`);
+    const data = await response.json();
+    return data;
   } catch (error) {
-      console.error('API error:', error);
-      throw error;
+    console.error('API error:', error);
+    throw error;
   }
 };
 
 // Fetch Average Length of Stay
 export const fetchALOS = async (userid) => {
   try {
-      const response = await fetch(`${API_URL}/users/alos?userid=${userid}`);
-      const data = await response.json();
-      return data; 
+    const response = await fetch(`${API_URL}/users/alos?userid=${userid}`);
+    const data = await response.json();
+    return data;
   } catch (error) {
-      console.error('API error:', error);
-      throw error;
+    console.error('API error:', error);
+    throw error;
   }
 };
 
@@ -923,7 +940,7 @@ export const getOperatorProperties = async (userid, reservationid) => {
       },
     });
 
-    if(!response) {
+    if (!response) {
       const errorData = await response.json();
       throw new Error(errorData.message || 'Failed to get properties');
     }
@@ -940,11 +957,11 @@ export const getOperatorProperties = async (userid, reservationid) => {
 export const fetchUserData = async (userid) => {
   try {
     const response = await fetch(`${API_URL}/users/${userid}`);
-    
+
     if (!response.ok) {
       throw new Error('Failed to fetch user data');
     }
-    
+
     return await response.json();
   } catch (error) {
     console.error('Error fetching user data:', error);
@@ -955,132 +972,132 @@ export const fetchUserData = async (userid) => {
 // Fetch google user data
 export const fetchGoogleUserData = async (accessToken) => {
   try {
-      const response = await fetch(`https://www.googleapis.com/oauth2/v1/userinfo?access_token=${accessToken}`, {
-          headers: {
-              Authorization: `Bearer ${accessToken}`,
-              Accept: 'application/json',
-          },
-      });
+    const response = await fetch(`https://www.googleapis.com/oauth2/v1/userinfo?access_token=${accessToken}`, {
+      headers: {
+        Authorization: `Bearer ${accessToken}`,
+        Accept: 'application/json',
+      },
+    });
 
-      if (!response.ok) {
-          throw new Error('Failed to fetch Google user data');
-      }
+    if (!response.ok) {
+      throw new Error('Failed to fetch Google user data');
+    }
 
-      const profile = await response.json();
-      return profile;
+    const profile = await response.json();
+    return profile;
   } catch (error) {
-      console.error("Error fetching Google user data:", error);
-      return null;
+    console.error("Error fetching Google user data:", error);
+    return null;
   }
 };
 
 // Update user profile
 export const updateProfile = async (userData) => {
-    const creatorid = localStorage.getItem("userid");
-    const creatorUsername = localStorage.getItem("username");
-    
-    try {
-        // Validate user ID
-        if (!userData.userid) {
-            throw new Error('User ID is missing');
-        }
-      
-        const response = await fetch(`${API_URL}/users/updateProfile/${userData.userid}?creatorid=${creatorid}&creatorUsername=${creatorUsername}`, {
-            method: 'PUT',
-            headers: {
-                'Content-Type': 'application/json',
-            },
-            body: JSON.stringify(userData),
-        });
+  const creatorid = localStorage.getItem("userid");
+  const creatorUsername = localStorage.getItem("username");
 
-        if (!response.ok) {
-            const errorData = await response.json();
-            throw new Error(errorData.message || 'Failed to update user profile');
-        }
-
-        return await response.json();
-    } catch (error) {
-        console.error('API error:', error);
-        throw error;
+  try {
+    // Validate user ID
+    if (!userData.userid) {
+      throw new Error('User ID is missing');
     }
+
+    const response = await fetch(`${API_URL}/users/updateProfile/${userData.userid}?creatorid=${creatorid}&creatorUsername=${creatorUsername}`, {
+      method: 'PUT',
+      headers: {
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify(userData),
+    });
+
+    if (!response.ok) {
+      const errorData = await response.json();
+      throw new Error(errorData.message || 'Failed to update user profile');
+    }
+
+    return await response.json();
+  } catch (error) {
+    console.error('API error:', error);
+    throw error;
+  }
 };
 
 //Upload Avatar
 export const uploadAvatar = async (userid, base64String) => {
-    const creatorid = localStorage.getItem("userid");
-    const creatorUsername = localStorage.getItem("username");
-  
-    try {
-      if (!userid) {
-        throw new Error('User ID is missing');
-      }
-  
-      const response = await fetch(`${API_URL}/users/uploadAvatar/${userid}?creatorid=${creatorid}&creatorUsername=${creatorUsername}`, {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({ uimage: base64String }), 
-      });
-  
-      const data = await response.json();
-      if (!response.ok) {
-        throw new Error(data.message || 'Failed to upload avatar');
-      }
-  
-      return data; 
-    } catch (error) {
-      console.error('API error:', error);
-      throw error;
+  const creatorid = localStorage.getItem("userid");
+  const creatorUsername = localStorage.getItem("username");
+
+  try {
+    if (!userid) {
+      throw new Error('User ID is missing');
     }
-  };
+
+    const response = await fetch(`${API_URL}/users/uploadAvatar/${userid}?creatorid=${creatorid}&creatorUsername=${creatorUsername}`, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify({ uimage: base64String }),
+    });
+
+    const data = await response.json();
+    if (!response.ok) {
+      throw new Error(data.message || 'Failed to upload avatar');
+    }
+
+    return data;
+  } catch (error) {
+    console.error('API error:', error);
+    throw error;
+  }
+};
 
 // Forgot Password
 export const forgotPassword = async (email) => {
-    try {
-        const response = await fetch(`${API_URL}/forgot-password`, {
-            method: 'POST',
-            headers: {
-                'Content-Type': 'application/json',
-            },
-            body: JSON.stringify({ email }),
-        });
+  try {
+    const response = await fetch(`${API_URL}/forgot-password`, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify({ email }),
+    });
 
-        const data = await response.json();
+    const data = await response.json();
 
-        if (!response.ok) {
-            throw new Error(data.message || 'Reset password failed');
-        }
-
-        return data; 
-    } catch (error) {
-        console.error('Reset password request error:', error);
-        throw error; 
+    if (!response.ok) {
+      throw new Error(data.message || 'Reset password failed');
     }
+
+    return data;
+  } catch (error) {
+    console.error('Reset password request error:', error);
+    throw error;
+  }
 };
 
 
 //Google Login
 export const googleLogin = async (token) => {
-    try {
-        const response = await fetch(`${API_URL}/google-login`, {
-            method: "POST",
-            headers: { "Content-Type": "application/json" },
-            body: JSON.stringify({ token }),
-        });
+  try {
+    const response = await fetch(`${API_URL}/google-login`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ token }),
+    });
 
-        if (!response.ok) {
-            const errorData = await response.json();
-            console.error("Server error response:", errorData);
-            throw new Error(errorData.message || "Google Login Failed");
-        }
-
-        const data = await response.json();
-        return data;
-    } catch (error) {
-        console.error("Error in Google Login:", error);
-        throw error;
+    if (!response.ok) {
+      const errorData = await response.json();
+      console.error("Server error response:", errorData);
+      throw new Error(errorData.message || "Google Login Failed");
     }
+
+    const data = await response.json();
+    return data;
+  } catch (error) {
+    console.error("Error in Google Login:", error);
+    throw error;
+  }
 };
 
 // Google Map
@@ -1133,14 +1150,14 @@ export const auditTrails = async (userid) => {
       },
     });
 
-    if(!response.ok) {
+    if (!response.ok) {
       const errorData = await response.json();
       throw new Error(errorData.message || 'Failed to fetch audit trails');
     }
 
     const data = await response.json();
     return data.auditTrails;
-  }catch (error) {
+  } catch (error) {
     console.error('API error: ', error);
     throw error;
   }
@@ -1149,7 +1166,7 @@ export const auditTrails = async (userid) => {
 // Submit a review for a property
 export const submitReview = async (reviewData) => {
   const creatorUsername = localStorage.getItem("username");
-  
+
   try {
     const response = await fetch(`${API_URL}/reviews?creatorUsername=${creatorUsername}`, {
       method: 'POST',
@@ -1160,7 +1177,7 @@ export const submitReview = async (reviewData) => {
     });
 
     console.log('Response status:', response.status);
-    
+
     if (!response.ok) {
       const errorData = await response.json();
       console.error('Server error response:', errorData);
@@ -1178,11 +1195,11 @@ export const submitReview = async (reviewData) => {
 export const fetchReviews = async (propertyid) => {
   try {
     const response = await fetch(`${API_URL}/reviews/${propertyid}`);
-    
+
     if (!response.ok) {
       throw new Error('Failed to fetch property reviews');
     }
-    
+
     return await response.json();
   } catch (error) {
     console.error('Error fetching property reviews:', error);
@@ -1317,10 +1334,10 @@ export const fetchCategories = async () => {
     }
 
     const data = await response.json();
-    return data; 
+    return data;
   } catch (error) {
     console.error('Error fetching categories:', error);
-    throw error; 
+    throw error;
   }
 };
 
@@ -1328,7 +1345,7 @@ export const fetchCategories = async () => {
 // export const paymentSuccess = async (reservationid) => {
 //   const creatorid = localStorage.getItem("userid");
 //   const creatorUsername = localStorage.getItem("username");
-  
+
 //   try {
 //     const response = await fetch(`${API_URL}/payment_success/${reservationid}?creatorid=${creatorid}&creatorUsername=${creatorUsername}`, {
 //       method: 'POST',
@@ -1423,11 +1440,11 @@ export const checkDateOverlap = async (propertyId, checkIn) => {
 export const generateVehicleBookingId = async () => {
   try {
     const response = await fetch(`${API_URL}/bookings/generate-vehicle-id`);
-    
+
     if (!response.ok) {
       throw new Error('Failed to generate booking ID');
     }
-    
+
     const data = await response.json();
     return data;
   } catch (error) {
@@ -1446,11 +1463,11 @@ export const createVehicleBooking = async (bookingData) => {
       },
       body: JSON.stringify(bookingData)
     });
-    
+
     if (!response.ok) {
       throw new Error('Failed to create booking');
     }
-    
+
     return await response.json();
   } catch (error) {
     console.error('Error creating vehicle booking:', error);
@@ -1468,11 +1485,11 @@ export const updateVehicleBookingWithPayPal = async (bookingId, transactionData)
       },
       body: JSON.stringify(transactionData)
     });
-    
+
     if (!response.ok) {
       throw new Error('Failed to update booking with PayPal');
     }
-    
+
     return await response.json();
   } catch (error) {
     console.error('Error updating booking with PayPal:', error);
@@ -1484,11 +1501,11 @@ export const updateVehicleBookingWithPayPal = async (bookingId, transactionData)
 export const getVehicleOwnerPayPalId = async (vehicleId) => {
   try {
     const response = await fetch(`${API_URL}/vehicles/${vehicleId}/owner-paypal`);
-    
+
     if (!response.ok) {
       throw new Error('Failed to fetch vehicle owner PayPal ID');
     }
-    
+
     const data = await response.json();
     return data;
   } catch (error) {
@@ -1501,11 +1518,11 @@ export const getVehicleOwnerPayPalId = async (vehicleId) => {
 export const fetchUserBookings = async (userId) => {
   try {
     const response = await fetch(`${API_URL}/bookings/user/${userId}`);
-    
+
     if (!response.ok) {
       throw new Error('Failed to fetch user bookings');
     }
-    
+
     return await response.json();
   } catch (error) {
     console.error('Error fetching user bookings:', error);
