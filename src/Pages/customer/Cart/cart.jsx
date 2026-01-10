@@ -53,9 +53,6 @@ const Cart = () => {
         return expiresAt > now;
       });
 
-
-
-      // Update storage if some items expired
       if (validItems.length !== items.length) {
 
         localStorage.setItem(`cart_${token}`, JSON.stringify(validItems));
@@ -155,10 +152,8 @@ const Cart = () => {
     setIsProcessingPayment(true);
 
     try {
-      // Get API URL from environment variable
       const API_URL = import.meta.env.VITE_API_URL;
 
-      // Construct the endpoint URL
       const endpoint = `${API_URL}cart/confirm-payment`;
 
       console.log('Processing PayPal payment to:', endpoint);
@@ -167,8 +162,6 @@ const Cart = () => {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
-          // Add authorization if needed
-          // 'Authorization': `Bearer ${localStorage.getItem('token')}`
         },
         body: JSON.stringify({
           cart_token: cartToken,

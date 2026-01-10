@@ -366,7 +366,6 @@ const VehicleDetails = () => {
 
     const vehicleNameLower = vehicleName.toLowerCase().trim();
 
-    // Map to imported image references
     const vehicleImageMap = {
       'perodua myvi': PeroduaMyvi,
       'perodua axia': PeroduaAxia,
@@ -383,11 +382,10 @@ const VehicleDetails = () => {
       'nissan urvan nv350': NissanUrvan,
     };
 
-    // Try exact match first
+
     const exactMatch = vehicleImageMap[vehicleNameLower];
     if (exactMatch) return exactMatch;
     
-    // Check for partial matches
     for (const [key, value] of Object.entries(vehicleImageMap)) {
       if (vehicleNameLower.includes(key)) {
         return value;

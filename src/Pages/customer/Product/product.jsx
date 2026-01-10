@@ -13,7 +13,6 @@ import { AuthProvider } from '../../../Component/AuthContext/AuthContext';
 import Sorting from '../../../Component/Sorting/Sorting';
 
 //image
-// Import all car images at the top of your Product.jsx
 import PeroduaMyvi from '../../../public/Perodua Myvi.png';
 import PeroduaAxia from '../../../public/Perodua Axia.png';
 import HondaCity from '../../../public/Honda City.png';
@@ -110,15 +109,15 @@ const Product = () => {
 
   const navigate = useNavigate();
 
-  // Use React Query to fetch vehicles
+
   const { data: fetchedVehicles, isLoading, error } = useQuery({
     queryKey: ['vehicles'],
     queryFn: fetchProduct,
   });
 
-  // Set all vehicles when data is fetched
+
   useEffect(() => {
-    console.log('Fetched vehicles:', fetchedVehicles); // Debug log
+    console.log('Fetched vehicles:', fetchedVehicles);
     if (fetchedVehicles && Array.isArray(fetchedVehicles)) {
       setAllVehicles(fetchedVehicles);
       setVehicles([]);
@@ -191,7 +190,7 @@ const Product = () => {
     }, 500);
   };
 
-  // Show error toast if fetching fails
+
   useEffect(() => {
     if (error) {
       console.error('Error fetching vehicles:', error);
@@ -199,13 +198,13 @@ const Product = () => {
     }
   }, [error]);
 
-  // Create refs for search segments
+
   const locationRef = useRef(null);
   const pickupDateRef = useRef(null);
   const returnDateRef = useRef(null);
   const timeRef = useRef(null);
 
-  // Handle window resize
+
   useEffect(() => {
     const handleResize = () => {
       setIsMobile(window.innerWidth <= 480);
@@ -268,23 +267,22 @@ const Product = () => {
       let filteredVehicles = fetchedVehs.filter((vehicle) => {
         const vehiclePrice = parseFloat(vehicle.pricing?.daily || vehicle.daily || 0);
 
-        // Filter by price range if set
+     
         if (vehiclePrice < priceRange.min || vehiclePrice > priceRange.max) return false;
 
-        // Filter by region
+    
         if (selectedRegion && vehicle.region !== selectedRegion) return false;
 
-        // Filter by selected brands
+ 
         if (selectedBrands.length > 0 && !selectedBrands.includes(vehicle.brand)) {
           return false;
         }
 
-        // Filter by selected categories
+
         if (selectedCategories.length > 0 && !selectedCategories.includes(vehicle.category)) {
           return false;
         }
 
-        // Filter by transmission
         if (selectedTransmission.length > 0) {
           const transValue = vehicle.transmission === 1 ? 'Automatic' : 'Manual';
           if (!selectedTransmission.includes(transValue)) {
@@ -295,7 +293,7 @@ const Product = () => {
         return true;
       });
 
-      // Sort by price if requested
+  
       if (sortOrder === "asc") {
         filteredVehicles.sort((a, b) =>
           parseFloat(a.pricing?.daily || a.daily || 0) - parseFloat(b.pricing?.daily || b.daily || 0)
@@ -587,7 +585,6 @@ const Product = () => {
     );
   };
 
-  // Add scroll handler
   useEffect(() => {
     const handleScroll = () => {
       if (isLoadingMore || !hasMore) return;
@@ -650,7 +647,6 @@ const Product = () => {
 
                       const vehicleNameLower = vehicleName.toLowerCase().trim();
 
-                      // Map to imported image references (not string paths)
                       const vehicleImageMap = {
                         'perodua myvi': PeroduaMyvi,
                         'perodua axia': PeroduaAxia,
@@ -667,11 +663,9 @@ const Product = () => {
                         'nissan urvan nv350': NissanUrvan,
                       };
 
-                      // Try exact match first
                       const exactMatch = vehicleImageMap[vehicleNameLower];
                       if (exactMatch) return exactMatch;
 
-                      // Check for partial matches
                       for (const [key, value] of Object.entries(vehicleImageMap)) {
                         if (vehicleNameLower.includes(key)) {
                           return value;
