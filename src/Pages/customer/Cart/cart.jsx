@@ -150,98 +150,60 @@ const Cart = () => {
   };
 
 
-  const handleCartCheckout = async (paypalDetails) => {
+  const handlePayPalPayment = async (paypalDetails) => {
+
+    setIsProcessingPayment(true);
+
     try {
-      const checkoutResponse = await fetch('http://localhost:5432/cart/checkout', {
+      // Get API URL from environment variable
+      const API_URL = import.meta.env.VITE_API_URL;
+
+      // Construct the endpoint URL
+      const endpoint = `${API_URL}cart/confirm-payment`;
+
+      console.log('Processing PayPal payment to:', endpoint);
+
+      const response = await fetch(endpoint, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
+          // Add authorization if needed
+          // 'Authorization': `Bearer ${localStorage.getItem('token')}`
         },
         body: JSON.stringify({
           cart_token: cartToken,
           cart_items: cartItems,
-          customer_info: {}
-        })
-      });
-
-      if (!checkoutResponse.ok) {
-        const errorText = await checkoutResponse.text();
-        console.error('❌ Checkout failed:', errorText);
-        throw new Error(`Failed to create bookings: ${errorText}`);
-      }
-
-      const checkoutData = await checkoutResponse.json();
-      const completeResponse = await fetch('http://localhost:5432/cart/paypal-complete', {
-        method: 'PATCH',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({
-          cart_token: cartToken,
-          booking_ids: checkoutData.booking_ids,
           paypal_details: paypalDetails
         })
       });
-
-      if (!completeResponse.ok) {
-        const errorText = await completeResponse.text();
-        console.error('❌ PayPal update failed:', errorText);
-        throw new Error(`Failed to update PayPal: ${errorText}`);
+      if (!response.ok) {
+        const text = await response.text();
+        throw new Error(text);
       }
 
-      const completeData = await completeResponse.json();
+      const data = await response.json();
 
-      return checkoutData.booking_ids;
+
+      localStorage.removeItem(`cart_${cartToken}`);
+      localStorage.removeItem('cartToken');
+      window.dispatchEvent(new Event('cartUpdated'));
+
+
+      setCartItems([]);
+      setTotalAmount(0);
+      setPaymentStatus('success');
+      setBookingIds(data.booking_ids);
+
+      displayToast('success', 'Payment successful! Booking confirmed.');
+
     } catch (error) {
-      console.error('❌ Cart checkout error:', error);
-      console.error('❌ Error stack:', error.stack);
-      throw error;
+      console.error('❌ Payment confirmation failed:', error);
+      setPaymentStatus('error');
+      setPaymentError('Payment received but booking failed. Please contact support.');
+    } finally {
+      setIsProcessingPayment(false);
     }
   };
-
-const handlePayPalPayment = async (paypalDetails) => {
-
-  setIsProcessingPayment(true);
-
-  try {
-    const response = await fetch('http://localhost:5432/cart/confirm-payment', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({
-        cart_token: cartToken,
-        cart_items: cartItems,   
-        paypal_details: paypalDetails
-      })
-    });
-
-    if (!response.ok) {
-      const text = await response.text();
-      throw new Error(text);
-    }
-
-    const data = await response.json();
-
-
-    localStorage.removeItem(`cart_${cartToken}`);
-    localStorage.removeItem('cartToken');
-    window.dispatchEvent(new Event('cartUpdated'));
-
-    
-    setCartItems([]);
-    setTotalAmount(0);
-    setPaymentStatus('success');
-    setBookingIds(data.booking_ids);
-
-    displayToast('success', 'Payment successful! Booking confirmed.');
-
-  } catch (error) {
-    console.error('❌ Payment confirmation failed:', error);
-    setPaymentStatus('error');
-    setPaymentError('Payment received but booking failed. Please contact support.');
-  } finally {
-    setIsProcessingPayment(false);
-  }
-};
 
   const calculateTotalForPayPal = () => {
     const total = cartItems.reduce((sum, item) => sum + item.total_price, 0).toFixed(2);
