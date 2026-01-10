@@ -295,7 +295,7 @@ function Navbar() {
             <div className="container_navbar">
                 <nav className="navbar navbar-expand-lg">
                     <Link to="/" className="navbar-brand-link">
-                        <h1 className="navbar_brand">Hello Sarawak</h1>
+                        <h1 className="navbar_brand">Go Car</h1>
                     </Link>
 
                     <div className="offcanvas offcanvas-end" tabIndex="-1" id="offcanvasNavbar" aria-labelledby="offcanvasNavbarLabel">
@@ -349,7 +349,7 @@ function Navbar() {
                                         to="/about_sarawak"
                                         onClick={closeOffcanvas}
                                     >
-                                        About Sarawak
+                                        About Go Car
                                     </Link>
                                 </li>
 

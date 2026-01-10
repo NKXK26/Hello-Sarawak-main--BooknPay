@@ -18,7 +18,7 @@ const Footer = () => {
         <div className='top'>
 
           <div>
-            <h1>Hello Sarawak</h1>
+            <h1>Go Car</h1>
             <p>Your Journey Begin</p>
           </div>
 
@@ -47,11 +47,8 @@ const Footer = () => {
         <div className='bottom'>
 
           <div>
-            <h3>Tour</h3>
-            <a href='/'>Damai Beach</a>
-            <a href='/'>Bako National Park</a>
-            <a href='/'>Kuching Waterfront</a>
-            <a href='/'>Gunung Mulu National Park</a>
+            <h3>Vehicle</h3>
+            <a href='/product'>Browse</a>
           </div>
 
           <div>
