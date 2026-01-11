@@ -375,13 +375,6 @@ const Sorting = ({
   // Render filter button
   const renderFilterButton = () => (
     <div className="filter-button-container">
-      <button 
-        className="filter-button"
-        onClick={() => setShowFilters(true)}
-      >
-        <FaFilter /> Filters
-      </button>
-      
       {sortOrder !== 'none' && (
         <div className="sort-indicator">
           {sortOrder === 'asc' ? 'Price: Low to High' : 'Price: High to Low'}

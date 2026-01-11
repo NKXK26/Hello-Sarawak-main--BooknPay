@@ -1,18 +1,27 @@
 import React, { useState, useEffect, useRef, useCallback } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { useQuery, QueryClient, QueryClientProvider } from '@tanstack/react-query';
+import { useQuery } from '@tanstack/react-query';
 
 // Import Components
 import Navbar from '../../../Component/Navbar/navbar';
 import Footer from '../../../Component/Footer/footer';
 import Back_To_Top_Button from '../../../Component/Back_To_Top_Button/Back_To_Top_Button';
 import Toast from '../../../Component/Toast/Toast';
-import ImageSlider from '../../../Component/ImageSlider/ImageSlider';
 import TawkMessenger from '../../../Component/TawkMessenger/TawkMessenger';
 import { AuthProvider } from '../../../Component/AuthContext/AuthContext';
 import Sorting from '../../../Component/Sorting/Sorting';
 
-//image
+// Import API
+import { fetchProduct } from '../../../../Api/api';
+
+// Import React Icons
+import { FaSearch } from 'react-icons/fa';
+import { IoLocationSharp, IoCalendar } from 'react-icons/io5';
+import { MdEventAvailable } from "react-icons/md";
+import { TbManualGearbox } from "react-icons/tb";
+import { PiSteeringWheelFill } from "react-icons/pi";
+
+// Import vehicle images
 import PeroduaMyvi from '../../../public/Perodua Myvi.png';
 import PeroduaAxia from '../../../public/Perodua Axia.png';
 import HondaCity from '../../../public/Honda City.png';
@@ -27,25 +36,8 @@ import ToyotaSienta from '../../../public/Toyota Sienta.png';
 import PeroduaAruz from '../../../public/Perodua Aruz.png';
 import NissanUrvan from '../../../public/Nissan Urvan NV350.png';
 import DefaultCar from '../../../public/default-car.png';
-// Import API
-import { fetchProduct } from '../../../../Api/api';
 
-// Import React Icons and CSS
-import { FaStar, FaSearch } from 'react-icons/fa';
-import { HiUsers } from "react-icons/hi2";
-import { CiCalendarDate } from "react-icons/ci";
-import { IoLocationSharp } from "react-icons/io5";
 import './product.css';
-
-// Create a client
-const queryClient = new QueryClient({
-  defaultOptions: {
-    queries: {
-      staleTime: 5 * 60 * 1000, // 5 minutes
-      refetchOnWindowFocus: false,
-    },
-  },
-});
 
 const Product = () => {
   const [vehicles, setVehicles] = useState([]);
@@ -53,6 +45,13 @@ const Product = () => {
   const [showToast, setShowToast] = useState(false);
   const [toastType, setToastType] = useState('');
   const [selectedRegion, setSelectedRegion] = useState("");
+  const [selectedBrand, setSelectedBrand] = useState("");
+  const [selectedCategory, setSelectedCategory] = useState("");
+  const [selectedTransmission, setSelectedTransmission] = useState("");
+  const [selectedSeats, setSelectedSeats] = useState("");
+  const [minPrice, setMinPrice] = useState(0);
+  const [maxPrice, setMaxPrice] = useState(1000);
+  const [sortBy, setSortBy] = useState("");
   const [bookingData, setBookingData] = useState({
     pickupDate: "",
     returnDate: "",
@@ -67,29 +66,46 @@ const Product = () => {
   const [loadedVehicleIds, setLoadedVehicleIds] = useState(new Set());
   const [isLoadingMore, setIsLoadingMore] = useState(false);
   const [showFilters, setShowFilters] = useState(false);
+  const observer = useRef();
+
+  // Remove unused state variables
   const [priceRange, setPriceRange] = useState({ min: 0, max: 1000 });
   const [sortOrder, setSortOrder] = useState("none");
   const [selectedBrands, setSelectedBrands] = useState([]);
   const [selectedCategories, setSelectedCategories] = useState([]);
-  const [selectedTransmission, setSelectedTransmission] = useState([]);
-  const observer = useRef();
+  const [selectedTransmissions, setSelectedTransmissions] = useState([]);
 
-  // Sample regions - you might want to fetch these from API
+  // Your actual regions from database
   const regions = [
-    "Kuala Lumpur",
-    "Selangor",
-    "Penang",
-    "Johor",
-    "Melaka",
-    "Negeri Sembilan",
-    "Pahang",
-    "Perak",
-    "Kedah",
-    "Kelantan",
-    "Terengganu",
-    "Perlis",
-    "Sabah",
-    "Sarawak"
+    { id: "", name: "All Regions" },
+    { id: "1", name: "Kuching" },
+    { id: "2", name: "Sibu" },
+    { id: "4", name: "Miri" },
+    { id: "3", name: "Bintulu" },
+    { id: "6", name: "Kota Kinabalu" }
+  ];
+
+  const transmissionTypes = [
+    { id: "", name: "All Transmissions" },
+    { id: "automatic", name: "Automatic" },
+    { id: "manual", name: "Manual" }
+  ];
+
+  const seatOptions = [
+    { id: "", name: "Any Seats" },
+    { id: "2", name: "2 Seats" },
+    { id: "4", name: "4 Seats" },
+    { id: "5", name: "5 Seats" },
+    { id: "7", name: "7 Seats" },
+    { id: "8", name: "8+ Seats" }
+  ];
+
+  const sortOptions = [
+    { id: "", name: "Default" },
+    { id: "price_asc", name: "Price: Low to High" },
+    { id: "price_desc", name: "Price: High to Low" },
+    { id: "name_asc", name: "Name: A to Z" },
+    { id: "name_desc", name: "Name: Z to A" }
   ];
 
   const lastVehicleElementRef = useCallback(node => {
@@ -109,12 +125,10 @@ const Product = () => {
 
   const navigate = useNavigate();
 
-
   const { data: fetchedVehicles, isLoading, error } = useQuery({
     queryKey: ['vehicles'],
     queryFn: fetchProduct,
   });
-
 
   useEffect(() => {
     console.log('Fetched vehicles:', fetchedVehicles);
@@ -190,7 +204,6 @@ const Product = () => {
     }, 500);
   };
 
-
   useEffect(() => {
     if (error) {
       console.error('Error fetching vehicles:', error);
@@ -198,12 +211,10 @@ const Product = () => {
     }
   }, [error]);
 
-
   const locationRef = useRef(null);
   const pickupDateRef = useRef(null);
   const returnDateRef = useRef(null);
-  const timeRef = useRef(null);
-
+  const filtersRef = useRef(null);
 
   useEffect(() => {
     const handleResize = () => {
@@ -222,7 +233,7 @@ const Product = () => {
         !locationRef.current?.contains(event.target) &&
         !pickupDateRef.current?.contains(event.target) &&
         !returnDateRef.current?.contains(event.target) &&
-        !timeRef.current?.contains(event.target) &&
+        !filtersRef.current?.contains(event.target) &&
         !event.target.closest('.expanded-panel')) {
         setActiveTab(null);
       }
@@ -259,55 +270,75 @@ const Product = () => {
     if (e) e.stopPropagation();
 
     try {
-      const fetchedVehs = fetchedVehicles || await queryClient.fetchQuery({
-        queryKey: ['vehicles'],
-        queryFn: fetchProduct
-      });
-
-      let filteredVehicles = fetchedVehs.filter((vehicle) => {
+      // Use the cached data from react-query
+      let filteredVehicles = [...(fetchedVehicles || [])].filter((vehicle) => {
         const vehiclePrice = parseFloat(vehicle.pricing?.daily || vehicle.daily || 0);
 
-     
-        if (vehiclePrice < priceRange.min || vehiclePrice > priceRange.max) return false;
+        // Price range filter
+        if (vehiclePrice < minPrice || vehiclePrice > maxPrice) return false;
 
-    
-        if (selectedRegion && vehicle.region !== selectedRegion) return false;
-
- 
-        if (selectedBrands.length > 0 && !selectedBrands.includes(vehicle.brand)) {
-          return false;
+        // Region filter - check both region_id and region_name
+        if (selectedRegion && selectedRegion !== "") {
+          // If vehicle has region_id
+          if (vehicle.region_id && vehicle.region_id.toString() !== selectedRegion) return false;
+          // If vehicle has region_name
+          if (vehicle.region_name && 
+              regions.find(r => r.id === selectedRegion)?.name !== vehicle.region_name) return false;
         }
 
+        // Brand filter
+        if (selectedBrand && selectedBrand !== "" && 
+            vehicle.brand_name !== selectedBrand) return false;
 
-        if (selectedCategories.length > 0 && !selectedCategories.includes(vehicle.category)) {
-          return false;
+        // Category filter
+        if (selectedCategory && selectedCategory !== "" && 
+            vehicle.category_name !== selectedCategory) return false;
+
+        // Transmission filter
+        if (selectedTransmission && selectedTransmission !== "") {
+          const vehicleTransmission = vehicle.transmission_name || 
+                                     (vehicle.transmission === 1 ? 'Automatic' : 'Manual');
+          if (selectedTransmission === "automatic" && vehicleTransmission !== "Automatic") return false;
+          if (selectedTransmission === "manual" && vehicleTransmission !== "Manual") return false;
         }
 
-        if (selectedTransmission.length > 0) {
-          const transValue = vehicle.transmission === 1 ? 'Automatic' : 'Manual';
-          if (!selectedTransmission.includes(transValue)) {
-            return false;
+        // Seats filter
+        if (selectedSeats && selectedSeats !== "") {
+          const vehicleSeats = vehicle.seat || 5;
+          if (selectedSeats === "8") {
+            if (vehicleSeats < 8) return false;
+          } else {
+            if (vehicleSeats !== parseInt(selectedSeats)) return false;
           }
         }
 
         return true;
       });
 
-  
-      if (sortOrder === "asc") {
-        filteredVehicles.sort((a, b) =>
-          parseFloat(a.pricing?.daily || a.daily || 0) - parseFloat(b.pricing?.daily || b.daily || 0)
-        );
-      } else if (sortOrder === "desc") {
-        filteredVehicles.sort((a, b) =>
-          parseFloat(b.pricing?.daily || b.daily || 0) - parseFloat(a.pricing?.daily || a.daily || 0)
-        );
+      // Apply sorting
+      if (sortBy) {
+        filteredVehicles.sort((a, b) => {
+          switch (sortBy) {
+            case "price_asc":
+              return parseFloat(a.pricing?.daily || a.daily || 0) - 
+                     parseFloat(b.pricing?.daily || b.daily || 0);
+            case "price_desc":
+              return parseFloat(b.pricing?.daily || b.daily || 0) - 
+                     parseFloat(a.pricing?.daily || a.daily || 0);
+            case "name_asc":
+              return (a.vehicle || "").localeCompare(b.vehicle || "");
+            case "name_desc":
+              return (b.vehicle || "").localeCompare(a.vehicle || "");
+            default:
+              return 0;
+          }
+        });
       }
 
       if (filteredVehicles.length === 0) {
-        displayToast('error', 'No available vehicles match your criteria');
+        displayToast('info', 'No vehicles match your criteria. Try different filters.');
       } else {
-        displayToast('success', `Found ${filteredVehicles.length} available vehicles`);
+        displayToast('success', `Found ${filteredVehicles.length} vehicles`);
       }
 
       setAllVehicles(filteredVehicles);
@@ -326,6 +357,7 @@ const Product = () => {
       setHasMore(filteredVehicles.length > 8);
 
       setShowFilters(false);
+      setActiveTab(null);
 
     } catch (error) {
       console.error('Error filtering vehicles:', error);
@@ -345,21 +377,27 @@ const Product = () => {
       case 'location': ref = locationRef.current; break;
       case 'pickupDate': ref = pickupDateRef.current; break;
       case 'returnDate': ref = returnDateRef.current; break;
-      case 'time': ref = timeRef.current; break;
+      case 'filters': ref = filtersRef.current; break;
       default: return {};
     }
 
     if (!ref) return {};
 
     const rect = ref.getBoundingClientRect();
+    const isMobileView = window.innerWidth <= 768;
 
-    if (activeTab === 'time') {
-      return { right: '8px', left: 'auto' };
+    if (isMobileView) {
+      return {
+        left: '5%',
+        width: '90%',
+        top: `${rect.bottom + window.scrollY + 10}px`
+      };
     }
 
     return {
-      left: `${ref.offsetLeft}px`,
-      width: isMobile ? '90%' : `${Math.max(280, rect.width)}px`
+      left: `${rect.left}px`,
+      width: `${Math.max(300, rect.width)}px`,
+      top: `${rect.bottom + window.scrollY + 10}px`
     };
   };
 
@@ -367,9 +405,9 @@ const Product = () => {
     return (
       <section className="home" id="home">
         <div className="container_for_product">
-
           {/* Main search bar */}
           <div className="search-bar">
+            {/* Location */}
             <div
               ref={locationRef}
               className={`search-segment ${activeTab === 'location' ? 'active' : ''}`}
@@ -377,57 +415,33 @@ const Product = () => {
             >
               <IoLocationSharp className='search_bar_icon' />
               <div className="search-content">
-                <span className="search-label">Pick-up Location</span>
+                <span className="search-label">Location</span>
                 <span className="search-value">
-                  {selectedRegion || 'Select region'}
+                  {selectedRegion ? 
+                    regions.find(r => r.id === selectedRegion)?.name || 'Select region' 
+                    : 'All Regions'}
                 </span>
               </div>
             </div>
 
             <div className="search-divider"></div>
-
+            {/* Filters */}
             <div
-              ref={pickupDateRef}
-              className={`search-segment ${activeTab === 'pickupDate' ? 'active' : ''}`}
-              onClick={() => handleTabClick('pickupDate')}
+              ref={filtersRef}
+              className={`search-segment ${activeTab === 'filters' ? 'active' : ''}`}
+              onClick={() => handleTabClick('filters')}
             >
-              <CiCalendarDate className='search_bar_icon' />
+              <MdEventAvailable className='search_bar_icon' />
               <div className="search-content">
-                <span className="search-label">Pick-up Date</span>
+                <span className="search-label">Filters</span>
                 <span className="search-value">
-                  {bookingData.pickupDate || 'Select date'}
-                </span>
-              </div>
-            </div>
-
-            <div className="search-divider"></div>
-
-            <div
-              ref={returnDateRef}
-              className={`search-segment ${activeTab === 'returnDate' ? 'active' : ''}`}
-              onClick={() => handleTabClick('returnDate')}
-            >
-              <CiCalendarDate className='search_bar_icon' />
-              <div className="search-content">
-                <span className="search-label">Return Date</span>
-                <span className="search-value">
-                  {bookingData.returnDate || 'Select date'}
-                </span>
-              </div>
-            </div>
-
-            <div className="search-divider"></div>
-
-            <div
-              ref={timeRef}
-              className={`search-segment ${activeTab === 'time' ? 'active' : ''}`}
-              onClick={() => handleTabClick('time')}
-            >
-              <HiUsers className='search_bar_icon' />
-              <div className="search-content">
-                <span className="search-label">Time</span>
-                <span className="search-value">
-                  {bookingData.pickupTime} - {bookingData.returnTime}
+                  {[
+                    selectedRegion ? regions.find(r => r.id === selectedRegion)?.name : '',
+                    selectedBrand,
+                    selectedTransmission ? transmissionTypes.find(t => t.id === selectedTransmission)?.name : '',
+                    selectedSeats ? seatOptions.find(s => s.id === selectedSeats)?.name : '',
+                    sortBy ? sortOptions.find(s => s.id === sortBy)?.name : ''
+                  ].filter(Boolean).join(', ') || 'Add filters'}
                 </span>
               </div>
               <button
@@ -438,6 +452,7 @@ const Product = () => {
                 }}
               >
                 <FaSearch className='Check_icon' />
+                <span className="search-button-text">Search</span>
               </button>
             </div>
           </div>
@@ -449,18 +464,27 @@ const Product = () => {
               style={getPanelStyle()}
             >
               {activeTab === 'location' && (
-                <div>
+                <div className="filter-panel">
                   <h3>Select Region</h3>
-                  <RegionSelector
-                    selectedRegion={selectedRegion}
-                    setSelectedRegion={setSelectedRegion}
-                    regions={regions}
-                  />
+                  <div className="filter-options">
+                    {regions.map((region) => (
+                      <button
+                        key={region.id}
+                        className={`filter-option ${selectedRegion === region.id ? 'selected' : ''}`}
+                        onClick={() => {
+                          setSelectedRegion(region.id);
+                          setActiveTab(null);
+                        }}
+                      >
+                        {region.name}
+                      </button>
+                    ))}
+                  </div>
                 </div>
               )}
 
               {activeTab === 'pickupDate' && (
-                <div>
+                <div className="filter-panel">
                   <h3>Select Pick-up Date</h3>
                   <input
                     type="date"
@@ -470,11 +494,21 @@ const Product = () => {
                     min={new Date().toISOString().split("T")[0]}
                     className="date-input"
                   />
+                  <div className="time-selection">
+                    <label>Pick-up Time</label>
+                    <input
+                      type="time"
+                      name="pickupTime"
+                      value={bookingData.pickupTime}
+                      onChange={handleInputChange}
+                      className="time-input"
+                    />
+                  </div>
                 </div>
               )}
 
               {activeTab === 'returnDate' && (
-                <div>
+                <div className="filter-panel">
                   <h3>Select Return Date</h3>
                   <input
                     type="date"
@@ -484,33 +518,172 @@ const Product = () => {
                     min={bookingData.pickupDate || new Date().toISOString().split("T")[0]}
                     className="date-input"
                   />
+                  <div className="time-selection">
+                    <label>Return Time</label>
+                    <input
+                      type="time"
+                      name="returnTime"
+                      value={bookingData.returnTime}
+                      onChange={handleInputChange}
+                      className="time-input"
+                    />
+                  </div>
                 </div>
               )}
 
-              {activeTab === 'time' && (
-                <div>
-                  <h3>Select Time</h3>
-                  <div className="time-selection">
-                    <div className="time-input-group">
-                      <label>Pick-up Time</label>
-                      <input
-                        type="time"
-                        name="pickupTime"
-                        value={bookingData.pickupTime}
-                        onChange={handleInputChange}
-                        className="time-input"
-                      />
+              {activeTab === 'filters' && (
+                <div className="filter-panel">
+                  <h3>Vehicle Filters</h3>
+                  
+                  {/* Brand Filter */}
+                  <div className="filter-group">
+                    <label>Brand</label>
+                    <select
+                      value={selectedBrand}
+                      onChange={(e) => setSelectedBrand(e.target.value)}
+                      className="filter-select"
+                    >
+                      <option value="">All Brands</option>
+                      {[...new Set(fetchedVehicles?.map(v => v.brand_name) || [])]
+                        .filter(Boolean)
+                        .map(brand => (
+                          <option key={brand} value={brand}>{brand}</option>
+                        ))}
+                    </select>
+                  </div>
+
+                  {/* Category Filter */}
+                  <div className="filter-group">
+                    <label>Vehicle Type</label>
+                    <select
+                      value={selectedCategory}
+                      onChange={(e) => setSelectedCategory(e.target.value)}
+                      className="filter-select"
+                    >
+                      <option value="">All Categories</option>
+                      {[...new Set(fetchedVehicles?.map(v => v.category_name) || [])]
+                        .filter(Boolean)
+                        .map(category => (
+                          <option key={category} value={category}>{category}</option>
+                        ))}
+                    </select>
+                  </div>
+
+                  {/* Transmission Filter */}
+                  <div className="filter-group">
+                    <label>Transmission</label>
+                    <div className="icon-options">
+                      {transmissionTypes.map((type) => (
+                        <button
+                          key={type.id}
+                          className={`icon-option ${selectedTransmission === type.id ? 'selected' : ''}`}
+                          onClick={() => setSelectedTransmission(type.id)}
+                          title={type.name}
+                        >
+                          {type.id === "automatic" ? (
+                            <PiSteeringWheelFill />
+                          ) : type.id === "manual" ? (
+                            <TbManualGearbox />
+                          ) : (
+                            "All"
+                          )}
+                          <span className="icon-label">{type.name}</span>
+                        </button>
+                      ))}
                     </div>
-                    <div className="time-input-group">
-                      <label>Return Time</label>
-                      <input
-                        type="time"
-                        name="returnTime"
-                        value={bookingData.returnTime}
-                        onChange={handleInputChange}
-                        className="time-input"
-                      />
+                  </div>
+
+                  {/* Seats Filter */}
+                  <div className="filter-group">
+                    <label>Number of Seats</label>
+                    <div className="seat-options">
+                      {seatOptions.map((seats) => (
+                        <button
+                          key={seats.id}
+                          className={`seat-option ${selectedSeats === seats.id ? 'selected' : ''}`}
+                          onClick={() => setSelectedSeats(seats.id)}
+                        >
+                          {seats.name === "Any Seats" ? seats.name : seats.name.replace(" Seats", "")}
+                          {seats.id !== "" && <span className="seat-icon">👥</span>}
+                        </button>
+                      ))}
                     </div>
+                  </div>
+
+                  {/* Price Range Filter */}
+                  <div className="filter-group">
+                    <label>Daily Price Range</label>
+                    <div className="price-range-inputs">
+                      <div className="price-input-group">
+                        <span className="price-label">Min:</span>
+                        <input
+                          type="number"
+                          value={minPrice}
+                          onChange={(e) => setMinPrice(Number(e.target.value))}
+                          className="price-input"
+                          min="0"
+                          step="10"
+                        />
+                        <span className="price-currency">RM</span>
+                      </div>
+                      <div className="price-input-group">
+                        <span className="price-label">Max:</span>
+                        <input
+                          type="number"
+                          value={maxPrice}
+                          onChange={(e) => setMaxPrice(Number(e.target.value))}
+                          className="price-input"
+                          min="0"
+                          step="10"
+                        />
+                        <span className="price-currency">RM</span>
+                      </div>
+                    </div>
+                    <div className="price-range-display">
+                      RM {minPrice} - RM {maxPrice}
+                    </div>
+                  </div>
+
+                  {/* Sorting Filter */}
+                  <div className="filter-group">
+                    <label>Sort By</label>
+                    <select
+                      value={sortBy}
+                      onChange={(e) => setSortBy(e.target.value)}
+                      className="filter-select"
+                    >
+                      {sortOptions.map((option) => (
+                        <option key={option.id} value={option.id}>
+                          {option.name}
+                        </option>
+                      ))}
+                    </select>
+                  </div>
+
+                  <div className="filter-actions">
+                    <button
+                      className="clear-filters"
+                      onClick={() => {
+                        setSelectedBrand("");
+                        setSelectedCategory("");
+                        setSelectedTransmission("");
+                        setSelectedSeats("");
+                        setMinPrice(0);
+                        setMaxPrice(1000);
+                        setSortBy("");
+                      }}
+                    >
+                      Clear All
+                    </button>
+                    <button
+                      className="apply-filters"
+                      onClick={() => {
+                        setActiveTab(null);
+                        handleSearchVehicles();
+                      }}
+                    >
+                      Apply Filters
+                    </button>
                   </div>
                 </div>
               )}
@@ -518,46 +691,6 @@ const Product = () => {
           )}
         </div>
       </section>
-    );
-  };
-
-  const RegionSelector = ({ selectedRegion, setSelectedRegion, regions }) => {
-    const [isOpen, setIsOpen] = useState(false);
-
-    return (
-      <div className="cluster-selector">
-        <div
-          className="cluster-selector-header"
-          onClick={() => setIsOpen(!isOpen)}
-        >
-          <span className="cluster-label">
-            {selectedRegion || "Select Region"}
-          </span>
-          <i className="cluster-icon">
-            {isOpen ? "↑" : "↓"}
-          </i>
-        </div>
-
-        {isOpen && (
-          <div className="cluster-options">
-            {regions.map((region, index) => (
-              <div
-                key={index}
-                className={`cluster-option ${selectedRegion === region ? 'selected' : ''}`}
-                onClick={() => {
-                  setSelectedRegion(region);
-                  setIsOpen(false);
-                }}
-              >
-                <span className="cluster-name">{region}</span>
-                {selectedRegion === region && (
-                  <span className="check-icon">✓</span>
-                )}
-              </div>
-            ))}
-          </div>
-        )}
-      </div>
     );
   };
 
@@ -602,13 +735,45 @@ const Product = () => {
     return () => window.removeEventListener('scroll', handleScroll);
   }, [isLoadingMore, hasMore, page]);
 
+  // Function to get vehicle image
+  const getVehicleImage = (vehicleName) => {
+    if (!vehicleName) return DefaultCar;
+
+    const vehicleNameLower = vehicleName.toLowerCase().trim();
+
+    const vehicleImageMap = {
+      'perodua myvi': PeroduaMyvi,
+      'perodua axia': PeroduaAxia,
+      'honda city': HondaCity,
+      'toyota vios': ToyotaVios,
+      'proton saga': ProtonSaga,
+      'perodua alza': PeroduaAlza,
+      'perodua bezza': PeroduaBezza,
+      'perodua myvi (new)': PeroduaMyviNew,
+      'toyota fortuner': ToyotaFortuner,
+      'perodua alza (new)': PeroduaAlzaNew,
+      'toyota sienta': ToyotaSienta,
+      'perodua aruz': PeroduaAruz,
+      'nissan urvan nv350': NissanUrvan,
+    };
+
+    const exactMatch = vehicleImageMap[vehicleNameLower];
+    if (exactMatch) return exactMatch;
+
+    for (const [key, value] of Object.entries(vehicleImageMap)) {
+      if (vehicleNameLower.includes(key)) {
+        return value;
+      }
+    }
+
+    return DefaultCar;
+  };
+
   return (
     <div>
       <div className="Product_Main_Container">
         <AuthProvider>
           {!showFilters && <Navbar />}
-          <br /><br /><br />
-
           <div className="property-container_for_product">
             {renderSearchSection()}
             <div className="header-container">
@@ -624,8 +789,8 @@ const Product = () => {
                 setSelectedFacilities={setSelectedBrands}
                 selectedPropertyTypes={selectedCategories}
                 setSelectedPropertyTypes={setSelectedCategories}
-                selectedBookingOptions={selectedTransmission}
-                setSelectedBookingOptions={setSelectedTransmission}
+                selectedBookingOptions={selectedTransmissions}
+                setSelectedBookingOptions={setSelectedTransmissions}
                 handleCheckAvailability={handleSearchVehicles}
               />
             </div>
@@ -642,38 +807,7 @@ const Product = () => {
                   vehicles.map((vehicle, index) => {
                     const isLast = vehicles.length === index + 1;
                     const dailyPrice = vehicle.pricing?.daily || vehicle.daily || 0;
-                    const getVehicleImage = (vehicleName) => {
-                      if (!vehicleName) return DefaultCar;
-
-                      const vehicleNameLower = vehicleName.toLowerCase().trim();
-
-                      const vehicleImageMap = {
-                        'perodua myvi': PeroduaMyvi,
-                        'perodua axia': PeroduaAxia,
-                        'honda city': HondaCity,
-                        'toyota vios': ToyotaVios,
-                        'proton saga': ProtonSaga,
-                        'perodua alza': PeroduaAlza,
-                        'perodua bezza': PeroduaBezza,
-                        'perodua myvi (new)': PeroduaMyviNew,
-                        'toyota fortuner': ToyotaFortuner,
-                        'perodua alza (new)': PeroduaAlzaNew,
-                        'toyota sienta': ToyotaSienta,
-                        'perodua aruz': PeroduaAruz,
-                        'nissan urvan nv350': NissanUrvan,
-                      };
-
-                      const exactMatch = vehicleImageMap[vehicleNameLower];
-                      if (exactMatch) return exactMatch;
-
-                      for (const [key, value] of Object.entries(vehicleImageMap)) {
-                        if (vehicleNameLower.includes(key)) {
-                          return value;
-                        }
-                      }
-
-                      return DefaultCar;
-                    };
+                    
                     return (
                       <div
                         ref={isLast ? lastVehicleElementRef : null}

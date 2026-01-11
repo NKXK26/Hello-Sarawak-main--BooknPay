@@ -84,22 +84,6 @@ const Cart = () => {
     console.log('✅ Item removed, new total:', total);
   };
 
-  const clearCart = () => {
-    if (window.confirm('Are you sure you want to clear your cart?')) {
-      const token = localStorage.getItem('cartToken');
-      if (token) {
-        localStorage.removeItem(`cart_${token}`);
-        localStorage.removeItem('cartToken');
-        setCartItems([]);
-        setTotalAmount(0);
-        setCartToken('');
-
-        // Update cart count in all pages
-        window.dispatchEvent(new Event('cartUpdated'));
-      }
-    }
-  };
-
   const continueShopping = () => {
 
     navigate('/product');
