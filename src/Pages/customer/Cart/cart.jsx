@@ -1,22 +1,21 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { IoIosArrowBack, IoIosClose } from 'react-icons/io';
+import { IoIosArrowBack } from 'react-icons/io';
 import {
   FaTrash,
   FaCalendarAlt,
   FaClock,
   FaMapMarkerAlt,
   FaCar,
-  FaEdit,
   FaShieldAlt,
-  FaCheckCircle
+  FaCheckCircle,
+  FaPlus
 } from 'react-icons/fa';
 import { MdAirlineSeatReclineNormal } from 'react-icons/md';
 import { GiGearStickPattern } from 'react-icons/gi';
 import Navbar from '../../../Component/Navbar/navbar';
 import Footer from '../../../Component/Footer/footer';
 import Toast from '../../../Component/Toast/Toast';
-
 import { PayPalScriptProvider, PayPalButtons } from "@paypal/react-paypal-js";
 import './cart.css';
 
@@ -24,7 +23,6 @@ const Cart = () => {
   const [cartItems, setCartItems] = useState([]);
   const [cartToken, setCartToken] = useState('');
   const [totalAmount, setTotalAmount] = useState(0);
-  const [editingItem, setEditingItem] = useState(null);
   const [isProcessingPayment, setIsProcessingPayment] = useState(false);
   const [paymentStatus, setPaymentStatus] = useState('idle');
   const [paymentError, setPaymentError] = useState('');
@@ -38,10 +36,31 @@ const Cart = () => {
     import.meta.env.VITE_PAYPAL_CLIENT_ID || 'AQnKj2txjl1bnlCBzthuCa7DtxuK3X0PsNlrDhjDwxQasGACq8Y0PGNbaTEEuIDTFe9HGfIOis0tOstU'
   );
 
-
   useEffect(() => {
     loadCart();
   }, []);
+
+  const calculateWeekendDays = (pickupDate, returnDate) => {
+    if (!pickupDate || !returnDate) return 0;
+    
+    const start = new Date(pickupDate);
+    const end = new Date(returnDate);
+    const timeDiff = Math.abs(end - start);
+    const days = Math.ceil(timeDiff / (1000 * 60 * 60 * 24));
+
+    let weekendDays = 0;
+    let currentDate = new Date(start);
+
+    for (let i = 0; i < days; i++) {
+      const dayOfWeek = currentDate.getDay();
+      if (dayOfWeek === 0 || dayOfWeek === 6) {
+        weekendDays++;
+      }
+      currentDate.setDate(currentDate.getDate() + 1);
+    }
+
+    return weekendDays;
+  };
 
   const loadCart = () => {
     const token = localStorage.getItem('cartToken');
@@ -54,21 +73,44 @@ const Cart = () => {
         return expiresAt > now;
       });
 
-      if (validItems.length !== items.length) {
+      // Recalculate weekend surcharge for each item to ensure accuracy
+      const updatedItems = validItems.map(item => {
+        const weekendDays = calculateWeekendDays(item.pickup_date, item.return_date);
+        const weekendSurcharge = item.weekend_surcharge || 0;
+        
+        // If weekend surcharge is missing or incorrect, recalculate it
+        if (weekendDays > 0 && weekendSurcharge === 0) {
+          const baseDailyRate = item.price_per_day || 0;
+          const discountMultiplier = item.discount_multiplier || 1.00;
+          const dailyDiscountedRate = baseDailyRate * discountMultiplier;
+          const recalculatedSurcharge = dailyDiscountedRate * weekendDays * 0.2;
+          
+          return {
+            ...item,
+            weekend_surcharge: recalculatedSurcharge,
+            weekend_days: weekendDays
+          };
+        }
+        
+        return {
+          ...item,
+          weekend_days: weekendDays
+        };
+      });
 
-        localStorage.setItem(`cart_${token}`, JSON.stringify(validItems));
+      if (validItems.length !== items.length) {
+        localStorage.setItem(`cart_${token}`, JSON.stringify(updatedItems));
       }
 
-      setCartItems(validItems);
+      setCartItems(updatedItems);
       setCartToken(token);
 
-      const total = validItems.reduce((sum, item) => sum + item.total_price, 0);
+      const total = updatedItems.reduce((sum, item) => sum + item.total_price, 0);
       setTotalAmount(total);
     }
   };
 
   const removeItem = (itemId) => {
-
     const token = localStorage.getItem('cartToken');
     if (!token) return;
 
@@ -82,21 +124,18 @@ const Cart = () => {
     setTotalAmount(total);
 
     window.dispatchEvent(new Event('cartUpdated'));
-    console.log('✅ Item removed, new total:', total);
+    displayToast('success', 'Item removed from cart');
   };
 
   const continueShopping = () => {
-
     navigate('/product');
   };
 
   const validateCartItems = () => {
-
     if (cartItems.length === 0) {
       displayToast('error', 'Your cart is empty');
       return false;
     }
-
 
     const now = new Date();
     const expiredItems = cartItems.filter(item => {
@@ -105,18 +144,15 @@ const Cart = () => {
     });
 
     if (expiredItems.length > 0) {
-
       displayToast('error', 'Some items in your cart have expired. Please remove them.');
       return false;
     }
-
 
     const incompleteItems = cartItems.filter(item =>
       !item.first_name || !item.last_name || !item.email || !item.phone
     );
 
     if (incompleteItems.length > 0) {
-
       displayToast('error', 'Please complete customer information for all items before checkout');
       return false;
     }
@@ -124,21 +160,17 @@ const Cart = () => {
   };
 
   const displayToast = (type, message) => {
-
     setToastType(type);
     setToastMessage(message);
     setShowToast(true);
     setTimeout(() => setShowToast(false), 5000);
   };
 
-
   const handlePayPalPayment = async (paypalDetails) => {
-
     setIsProcessingPayment(true);
 
     try {
       const API_URL = import.meta.env.VITE_API_URL;
-
       const endpoint = `${API_URL}/cart/confirm-payment`;
 
       console.log('Processing PayPal payment to:', endpoint);
@@ -154,6 +186,7 @@ const Cart = () => {
           paypal_details: paypalDetails
         })
       });
+      
       if (!response.ok) {
         const text = await response.text();
         throw new Error(text);
@@ -161,11 +194,9 @@ const Cart = () => {
 
       const data = await response.json();
 
-
       localStorage.removeItem(`cart_${cartToken}`);
       localStorage.removeItem('cartToken');
       window.dispatchEvent(new Event('cartUpdated'));
-
 
       setCartItems([]);
       setTotalAmount(0);
@@ -174,10 +205,21 @@ const Cart = () => {
 
       displayToast('success', 'Payment successful! Booking confirmed.');
 
+      // Redirect to confirmation page after 2 seconds
+      setTimeout(() => {
+        navigate('/cart', { 
+          state: { 
+            bookingIds: data.booking_ids,
+            totalAmount: totalAmount 
+          } 
+        });
+      }, 2000);
+
     } catch (error) {
       console.error('❌ Payment confirmation failed:', error);
       setPaymentStatus('error');
       setPaymentError('Payment received but booking failed. Please contact support.');
+      displayToast('error', 'Payment failed. Please try again.');
     } finally {
       setIsProcessingPayment(false);
     }
@@ -188,14 +230,23 @@ const Cart = () => {
     return total;
   };
 
+  const getDiscountText = (rateType, discountMultiplier) => {
+    if (rateType === 'weekly' && discountMultiplier === 0.90) {
+      return 'Weekly (10% off)';
+    } else if (rateType === 'monthly' && discountMultiplier === 0.80) {
+      return 'Monthly (20% off)';
+    } else if (rateType === 'monthly' && discountMultiplier === 0.90) {
+      return 'Weekly (10% off) - Auto downgraded';
+    }
+    return 'Daily rate';
+  };
+
   return (
     <div className="cart-container">
       <Navbar />
 
       <div className="cart-header">
-        <button className="back-button" onClick={() => {
-          navigate(-1);
-        }}>
+        <button className="back-button" onClick={() => navigate(-1)}>
           <IoIosArrowBack /> Back
         </button>
         <h1>Your Shopping Cart</h1>
@@ -224,14 +275,16 @@ const Cart = () => {
           <>
             <div className="cart-items-section">
               <div className="cart-items">
-                {cartItems.map((item, index) => {
+                {cartItems.map((item) => {
+                  const extrasTotal = item.selected_extras?.reduce((sum, extra) => sum + extra.price, 0) || 0;
+                  const weekendDays = item.weekend_days || calculateWeekendDays(item.pickup_date, item.return_date);
+                  const hasWeekendSurcharge = weekendDays > 0 && item.weekend_surcharge > 0;
+                  const hasDiscount = item.discount_multiplier < 1;
+                  
                   return (
                     <div key={item.id} className="cart-item">
                       <div className="item-image">
                         <img src={item.image_url} alt={item.vehicle} />
-                        {editingItem === item.id && (
-                          <div className="editing-overlay">Editing...</div>
-                        )}
                       </div>
 
                       <div className="item-details">
@@ -265,9 +318,47 @@ const Cart = () => {
                             <FaClock />
                             <div>
                               <strong>Duration:</strong> {item.total_days} day{item.total_days > 1 ? 's' : ''}
+                              {weekendDays > 0 && (
+                                <span className="weekend-badge">
+                                  ({weekendDays} weekend day{weekendDays > 1 ? 's' : ''})
+                                </span>
+                              )}
                             </div>
                           </div>
                         </div>
+
+                        {/* Rate Type and Discount */}
+                        <div className="rate-info">
+                          <span className="rate-type">
+                            <strong>Rate:</strong> {getDiscountText(item.rate_type, item.discount_multiplier)}
+                          </span>
+                          {hasDiscount && (
+                            <span className="discount-badge">
+                              {item.discount_multiplier === 0.90 ? '10% OFF' : '20% OFF'}
+                            </span>
+                          )}
+                        </div>
+
+                        {/* Extras Section */}
+                        {item.selected_extras && item.selected_extras.length > 0 && (
+                          <div className="extras-section">
+                            <div className="extras-title">
+                              <FaPlus /> <strong>Extra Services:</strong>
+                            </div>
+                            <div className="extras-list">
+                              {item.selected_extras.map(extra => (
+                                <div key={extra.id} className="extra-item">
+                                  <span>{extra.name}</span>
+                                  <span className="extra-price">RM {extra.price.toFixed(2)}</span>
+                                </div>
+                              ))}
+                              <div className="extras-total">
+                                <span>Extras Total:</span>
+                                <span className="total-price">RM {extrasTotal.toFixed(2)}</span>
+                              </div>
+                            </div>
+                          </div>
+                        )}
 
                         <div className="customer-info">
                           <p><strong>Driver:</strong> {item.first_name} {item.last_name}</p>
@@ -282,13 +373,49 @@ const Cart = () => {
                       <div className="item-actions">
                         <div className="item-price">
                           <h3>RM {item.total_price.toFixed(2)}</h3>
-                          <div className="price-breakdown">
-                            <span>Base: RM {item.base_price.toFixed(2)}</span>
-                            {item.rate_type !== 'daily' && (
-                              <span className="discount-text">
-                                {item.rate_type === 'weekly' ? '10% OFF' : '20% OFF'}
-                              </span>
+                          <div className="price-breakdown-details">
+                            <div className="breakdown-item">
+                              <span>Daily Rate ({item.total_days} days):</span>
+                              <span>RM {(item.price_per_day * item.total_days).toFixed(2)}</span>
+                            </div>
+                            
+                            {hasDiscount && (
+                              <div className="breakdown-item discount">
+                                <span>Discount Applied:</span>
+                                <span className="discount-text">
+                                  -RM {((item.price_per_day * item.total_days) - item.base_price).toFixed(2)}
+                                </span>
+                              </div>
                             )}
+                            
+                            <div className="breakdown-item base-price">
+                              <span>Base Price:</span>
+                              <span>RM {item.base_price?.toFixed(2) || '0.00'}</span>
+                            </div>
+                            
+                            {hasWeekendSurcharge && (
+                              <div className="breakdown-item weekend">
+                                <span>Weekend Surcharge (20%):</span>
+                                <span>+RM {item.weekend_surcharge.toFixed(2)}</span>
+                              </div>
+                            )}
+                            
+                            {extrasTotal > 0 && (
+                              <div className="breakdown-item extras-breakdown">
+                                <span>Extra Services:</span>
+                                <span>+RM {extrasTotal.toFixed(2)}</span>
+                              </div>
+                            )}
+                            
+                            <div className="breakdown-item tax">
+                              <span>Service Tax (8%):</span>
+                              <span>+RM {(item.tax_amount || 0).toFixed(2)}</span>
+                            </div>
+                            
+                            <div className="breakdown-item total-row">
+                              <span><strong>Total:</strong></span>
+                              <span><strong>RM {item.total_price.toFixed(2)}</strong></span>
+                            </div>
                           </div>
                         </div>
 
@@ -385,13 +512,10 @@ const Cart = () => {
                         height: 48
                       }}
                       createOrder={(data, actions) => {
-
-                        // Validate cart before creating order
                         if (!validateCartItems()) {
                           return Promise.reject('Please fix cart issues before payment');
                         }
 
-                        // Calculate totals
                         const totalAmount = cartItems.reduce((sum, item) => sum + item.total_price, 0);
 
                         return actions.order.create({
@@ -430,12 +554,10 @@ const Cart = () => {
                         });
                       }}
                       onApprove={(data, actions) => {
-
                         return actions.order.capture().then((details) => {
                           setTimeout(() => {
                             handlePayPalPayment(details);
                           }, 0);
-
                           return details;
                         }).catch(err => {
                           console.error('❌ Capture failed:', err);
@@ -444,7 +566,6 @@ const Cart = () => {
                           throw err;
                         });
                       }}
-
                       onError={(err) => {
                         console.error('❌ PayPal onError triggered:', err);
                         console.error('❌ Error details:', JSON.stringify(err));
