@@ -838,9 +838,6 @@ const Product = () => {
                               <span className="price-amount">RM{dailyPrice}</span>
                               <span className="price-period">/day</span>
                             </div>
-                            <span className="vehicle-features">
-                              • CDW: RM{vehicle.pricing?.cdw || vehicle.cdw || 0}
-                            </span>
                           </div>
                         </div>
                       </div>

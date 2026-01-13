@@ -16,6 +16,7 @@ import { GiGearStickPattern } from 'react-icons/gi';
 import Navbar from '../../../Component/Navbar/navbar';
 import Footer from '../../../Component/Footer/footer';
 import Toast from '../../../Component/Toast/Toast';
+
 import { PayPalScriptProvider, PayPalButtons } from "@paypal/react-paypal-js";
 import './cart.css';
 
@@ -138,7 +139,7 @@ const Cart = () => {
     try {
       const API_URL = import.meta.env.VITE_API_URL;
 
-      const endpoint = `${API_URL}cart/confirm-payment`;
+      const endpoint = `${API_URL}/cart/confirm-payment`;
 
       console.log('Processing PayPal payment to:', endpoint);
 
@@ -216,7 +217,7 @@ const Cart = () => {
               Browse Vehicles
             </button>
             <p className="cart-note">
-              Your cart is saved in your browser for 7 days
+              Your cart is saved in your browser for 1 days
             </p>
           </div>
         ) : (
@@ -283,7 +284,6 @@ const Cart = () => {
                           <h3>RM {item.total_price.toFixed(2)}</h3>
                           <div className="price-breakdown">
                             <span>Base: RM {item.base_price.toFixed(2)}</span>
-                            <span>CDW: RM {item.cdw_total.toFixed(2)}</span>
                             {item.rate_type !== 'daily' && (
                               <span className="discount-text">
                                 {item.rate_type === 'weekly' ? '10% OFF' : '20% OFF'}

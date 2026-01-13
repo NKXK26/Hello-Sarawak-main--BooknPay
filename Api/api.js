@@ -21,7 +21,7 @@ export const signupUser = async (userData) => {
 // Login
 export const loginUser = async (userData) => {
   try {
-    const response = await fetch(`${API_URL}login`, {
+    const response = await fetch(`${API_URL}/login`, {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
@@ -96,7 +96,7 @@ export const fetchProduct = async () => {
     const API_URL = import.meta.env.VITE_API_URL;
 
     // Construct the full URL
-    const apiEndpoint = `${API_URL}product`;
+    const apiEndpoint = `${API_URL}/product`;
 
     console.log('Fetching from:', apiEndpoint); // Debug log
 
@@ -1341,32 +1341,6 @@ export const fetchCategories = async () => {
   }
 };
 
-// // Payment Successful Notification
-// export const paymentSuccess = async (reservationid) => {
-//   const creatorid = localStorage.getItem("userid");
-//   const creatorUsername = localStorage.getItem("username");
-
-//   try {
-//     const response = await fetch(`${API_URL}/payment_success/${reservationid}?creatorid=${creatorid}&creatorUsername=${creatorUsername}`, {
-//       method: 'POST',
-//       headers: {
-//         'Content-Type': 'application/json',
-//       },
-//     });
-
-//     if (!response) {
-//       const errorData = await response.json();
-//       throw new Error(errorData.message || 'Failed to send payment successful notification');
-//     }
-
-//     return await response.json();
-//   }catch (error) {
-//     console.error('API error: ', error);
-//     throw error;
-//   }
-// };
-
-// Add these to your api.js
 export const createBooking = async (bookingData) => {
   try {
     const response = await fetch('/api/bookings', {
@@ -1408,7 +1382,6 @@ export const generateBookingID = async () => {
   }
 };
 
-// add for checking date overlapping
 export const checkDateOverlap = async (propertyId, checkIn) => {
   const creatorid = localStorage.getItem("userid");
   const creatorUsername = localStorage.getItem("username");
@@ -1434,8 +1407,6 @@ export const checkDateOverlap = async (propertyId, checkIn) => {
     throw error;
   }
 };
-// Add these functions to your existing api.js file:
-
 // Generate vehicle booking ID
 export const generateVehicleBookingId = async () => {
   try {
@@ -1453,7 +1424,6 @@ export const generateVehicleBookingId = async () => {
   }
 };
 
-// Create vehicle booking
 export const createVehicleBooking = async (bookingData) => {
   try {
     const response = await fetch(`${API_URL}/bookings/vehicle`, {
@@ -1475,7 +1445,6 @@ export const createVehicleBooking = async (bookingData) => {
   }
 };
 
-// Update booking with PayPal transaction
 export const updateVehicleBookingWithPayPal = async (bookingId, transactionData) => {
   try {
     const response = await fetch(`${API_URL}/bookings/vehicle/${bookingId}/paypal`, {
@@ -1497,7 +1466,6 @@ export const updateVehicleBookingWithPayPal = async (bookingId, transactionData)
   }
 };
 
-// Get vehicle owner PayPal ID
 export const getVehicleOwnerPayPalId = async (vehicleId) => {
   try {
     const response = await fetch(`${API_URL}/vehicles/${vehicleId}/owner-paypal`);
@@ -1514,7 +1482,23 @@ export const getVehicleOwnerPayPalId = async (vehicleId) => {
   }
 };
 
-// Fetch user bookings
+export const fetchExtras = async () => {
+  try {
+    const response = await fetch(`${API_URL}/extras`, {
+      method: 'GET',
+      headers: {
+        'Content-Type': 'application/json',
+      },
+    });
+    
+    const data = await response.json();
+    return { ok: response.ok, status: response.status, data };
+  } catch (error) {
+    console.error('API error fetching extras:', error);
+    throw error;
+  }
+};
+
 export const fetchUserBookings = async (userId) => {
   try {
     const response = await fetch(`${API_URL}/bookings/user/${userId}`);
