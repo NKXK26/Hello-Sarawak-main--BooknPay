@@ -256,12 +256,7 @@ const Cart = () => {
 
   const handlePayPalPayment = async (paypalDetails) => {
     setIsProcessingPayment(true);
-    body: JSON.stringify({
-      cart_token: cartToken,
-      cart_items: cartItems,
-      paypal_details: paypalDetails,
-      recaptcha_token: recaptchaToken // Add this line
-    })
+
     try {
       const API_URL = import.meta.env.VITE_API_URL;
       const endpoint = `${API_URL}/cart/confirm-payment`;
@@ -276,7 +271,8 @@ const Cart = () => {
         body: JSON.stringify({
           cart_token: cartToken,
           cart_items: cartItems,
-          paypal_details: paypalDetails
+          paypal_details: paypalDetails,
+          recaptcha_token: recaptchaToken  // ✅ Add this line
         })
       });
 
@@ -295,7 +291,8 @@ const Cart = () => {
       setTotalAmount(0);
       setPaymentStatus('success');
       setBookingIds(data.booking_ids);
-      resetRecaptcha();
+      resetRecaptcha();  // ✅ Reset reCAPTCHA after success
+
       displayToast('success', 'Payment successful! Booking confirmed.');
 
       // Redirect to confirmation page after 2 seconds
@@ -309,11 +306,11 @@ const Cart = () => {
       }, 2000);
 
     } catch (error) {
-      resetRecaptcha();
       console.error('❌ Payment confirmation failed:', error);
       setPaymentStatus('error');
       setPaymentError('Payment received but booking failed. Please contact support.');
       displayToast('error', 'Payment failed. Please try again.');
+      resetRecaptcha();  // ✅ Reset reCAPTCHA on error
     } finally {
       setIsProcessingPayment(false);
     }
@@ -700,17 +697,18 @@ const Cart = () => {
                           throw err;
                         });
                       }}
+                      onCancel={() => {
+                        displayToast('info', 'Payment cancelled. You can try again.');
+                        setIsProcessingPayment(false);
+                        resetRecaptcha();  // ✅ Add this
+                      }}
+
                       onError={(err) => {
                         console.error('❌ PayPal onError triggered:', err);
                         console.error('❌ Error details:', JSON.stringify(err));
                         displayToast('error', 'Payment processing error. Please try again.');
                         setIsProcessingPayment(false);
-                         resetRecaptcha();
-                      }}
-                      onCancel={() => {
-                        displayToast('info', 'Payment cancelled. You can try again.');
-                        setIsProcessingPayment(false);
-                         resetRecaptcha();
+                        resetRecaptcha();  // ✅ Add this
                       }}
                       disabled={isProcessingPayment || cartItems.length === 0 || !isRecaptchaVerified}
                     />
