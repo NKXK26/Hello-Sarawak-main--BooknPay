@@ -33,8 +33,6 @@ body {
 body.no-scroll {
     overflow: hidden;
 }
-
-/* Navbar Base - Keeping original dimensions */
 .navbar {
     background-color: var(--white);
     margin: 0;
@@ -98,7 +96,6 @@ body.no-scroll {
 
 .navbar .navbar_brand {
     font-weight: 700;
-    color: var(--primary);
     font-size: 1.6rem;
     margin: 0;
     letter-spacing: -0.5px;
@@ -106,8 +103,20 @@ body.no-scroll {
     transition: var(--transition);
 }
 
-.navbar_brand span {
-    color: var(--secondary);
+.go-text {
+    color: #000000;
+}
+
+.car-text {
+    color: #FF6B35; 
+}
+
+.navbar-brand-link:hover .go-text {
+    color: #333333; 
+}
+
+.navbar-brand-link:hover .car-text {
+    color: #FF8C42; 
 }
 
 .navbar-brand-link:hover .navbar_brand {
@@ -115,7 +124,6 @@ body.no-scroll {
     transform: translateY(-1px);
 }
 
-/* Navigation Menu */
 .navbar-nav {
     display: flex;
     gap: 3.5rem;

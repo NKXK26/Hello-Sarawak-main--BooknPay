@@ -1,7 +1,5 @@
 import React, { useState, useEffect } from 'react';
 import { useLocation, useNavigate } from 'react-router-dom';
-import { IoIosArrowBack, IoIosArrowForward, IoIosClose } from "react-icons/io";
-import { IoReturnUpBackOutline } from "react-icons/io5";
 import { FaUser, FaMapMarkerAlt, FaStar, FaCar, FaGasPump, FaCogs, FaCalendarAlt, FaClock, FaPhone, FaEnvelope, FaShieldAlt, FaCheckCircle } from "react-icons/fa";
 import { MdAirlineSeatReclineNormal, MdOutlineDirectionsCar } from "react-icons/md";
 import { GiGearStickPattern } from "react-icons/gi";
@@ -11,8 +9,7 @@ import Toast from '../../../Component/Toast/Toast';
 import Reviews from '../../../Component/Reviews/Reviews';
 import Footer from '../../../Component/Footer/footer';
 import './PropertyDetails.css';
-import { createReservation, requestBooking, getCoordinates, fetchUserData, checkDateOverlap, fetchExtras } from '../../../../Api/api';
-import { PayPalScriptProvider, PayPalButtons } from "@paypal/react-paypal-js";
+import { createReservation, requestBooking, getCoordinates, fetchUserData, checkDateOverlap, fetchExtras, fetchLocations } from '../../../../Api/api';
 
 // Import all vehicle images
 import PeroduaMyvi from '../../../public/Perodua Myvi.png';
@@ -31,31 +28,34 @@ import NissanUrvan from '../../../public/Nissan Urvan NV350.png';
 import DefaultCar from '../../../public/default-car.png';
 
 const VehicleDetails = () => {
+  const [selectedRateType, setSelectedRateType] = useState('daily');
+  const [includeCDW, setIncludeCDW] = useState(false);
+  const [includeDriver, setIncludeDriver] = useState(false);
+  const [acceptTerms, setAcceptTerms] = useState(false);
   const [weekendSurcharge, setWeekendSurcharge] = useState(0);
+  const [totalHours, setTotalHours] = useState(0); // Add this line
   const [totalBasePrice, setTotalBasePrice] = useState(0);
   const location = useLocation();
-  const [isFullscreen, setIsFullscreen] = useState(false);
-  const [selectedImageIndex, setSelectedImageIndex] = useState(0);
   const [toastMessage, setToastMessage] = useState('');
   const [showToast, setShowToast] = useState(false);
   const [toastType, setToastType] = useState('');
   const [extras, setExtras] = useState([]);
   const [selectedExtras, setSelectedExtras] = useState([]);
-  const [isExtrasOpen, setIsExtrasOpen] = useState(false);
   const [isLoadingExtras, setIsLoadingExtras] = useState(false);
   const { vehicleDetails } = location.state || {};
+  const [locations, setLocations] = useState([]);
   const [bookingData, setBookingData] = useState({
     pickupDate: '',
     returnDate: '',
-    pickupTime: '09:00',
-    returnTime: '17:00',
+    pickupTime: '',
+    returnTime: '',
     pickupLocation: '',
     returnLocation: '',
+    rateType: 'daily' // Add rateType to bookingData
   });
   const [showAllPhotos, setShowAllPhotos] = useState(false);
   const [showBookingForm, setShowBookingForm] = useState(false);
   const [showReviews, setShowReviews] = useState(false);
-  const [isEditingDates, setIsEditingDates] = useState(false);
   const [totalDays, setTotalDays] = useState(0);
   const [totalPrice, setTotalPrice] = useState(0);
   const [bookingForm, setBookingForm] = useState({
@@ -71,7 +71,6 @@ const VehicleDetails = () => {
   const [showFeaturesOverlay, setShowFeaturesOverlay] = useState(false);
   const [currentSlide, setCurrentSlide] = useState(0);
 
-
   const [isProcessingPayment, setIsProcessingPayment] = useState(false);
   const [bookingId, setBookingId] = useState('');
 
@@ -82,6 +81,33 @@ const VehicleDetails = () => {
   const [paymentStatus, setPaymentStatus] = useState('idle');
   const [paymentError, setPaymentError] = useState('');
 
+  // Helper functions for current time
+  const getCurrentTime = () => {
+    const now = new Date();
+    const hours = now.getHours().toString().padStart(2, '0');
+    const minutes = now.getMinutes().toString().padStart(2, '0');
+    return `${hours}:${minutes}`;
+  };
+
+  const getDefaultReturnTime = () => {
+    const now = new Date();
+    now.setHours(now.getHours() + 2); // 2 hours from now as default
+    const hours = now.getHours().toString().padStart(2, '0');
+    const minutes = now.getMinutes().toString().padStart(2, '0');
+    return `${hours}:${minutes}`;
+  };
+
+  // Initialize bookingData with current times
+  useEffect(() => {
+    const currentTime = getCurrentTime();
+    const defaultReturnTime = getDefaultReturnTime();
+
+    setBookingData(prev => ({
+      ...prev,
+      pickupTime: currentTime,
+      returnTime: defaultReturnTime
+    }));
+  }, []);
 
   const validateBookingForm = () => {
     const requiredFields = [
@@ -93,7 +119,6 @@ const VehicleDetails = () => {
         return false;
       }
     }
-
 
     const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
     if (!emailRegex.test(bookingForm.email)) {
@@ -108,11 +133,19 @@ const VehicleDetails = () => {
       return false;
     }
 
+    if (!bookingData.pickupLocation) {
+      return false;
+    }
+
+    if (!acceptTerms) {
+      return false;
+    }
     return true;
   };
 
   const [cartToken, setCartToken] = useState('');
   const [cartCount, setCartCount] = useState(0);
+
   useEffect(() => {
     const updateCartCount = () => {
       const token = localStorage.getItem('cartToken');
@@ -123,7 +156,6 @@ const VehicleDetails = () => {
     };
 
     updateCartCount();
-
 
     window.addEventListener('cartUpdated', updateCartCount);
     window.addEventListener('storage', updateCartCount);
@@ -136,26 +168,50 @@ const VehicleDetails = () => {
 
   useEffect(() => {
     initializeCart();
+    loadLocations();
   }, []);
 
-  const initializeCart = () => {
+  const loadLocations = async () => {
+    try {
+      const result = await fetchLocations();
+      if (Array.isArray(result) && result.length > 0) {
+        const formattedLocations = result.map(loc => ({
+          id: loc.id,
+          name: loc.name,
+          region_name: loc.region_name || 'Unknown Region'
+        }));
+        setLocations(formattedLocations);
+      } else {
+        setLocations([
+          { id: 1, name: 'International Airport Kuching', region_name: 'Kuching' },
+          { id: 2, name: 'Hilton Hotel', region_name: 'Kuching' },
+          { id: 3, name: 'Main Office', region_name: 'Central' }
+        ]);
+      }
+    } catch (error) {
+      console.error('Failed to load locations:', error);
+      displayToast('error', 'Could not load locations');
+      setLocations([
+        { id: 1, name: 'International Airport Kuching', region_name: 'Kuching' },
+        { id: 2, name: 'Hilton Hotel', region_name: 'Kuching' },
+        { id: 3, name: 'Main Office', region_name: 'Central' }
+      ]);
+    }
+  };
 
+  const initializeCart = () => {
     let storedToken = localStorage.getItem('cartToken');
 
     if (!storedToken) {
-
       storedToken = generateCartToken();
       localStorage.setItem('cartToken', storedToken);
-
       localStorage.setItem(`cart_${storedToken}`, JSON.stringify([]));
     }
 
     setCartToken(storedToken);
 
-
     const cartItems = JSON.parse(localStorage.getItem(`cart_${storedToken}`)) || [];
     setCartCount(cartItems.length);
-
 
     cleanupOldCarts(storedToken);
   };
@@ -164,20 +220,29 @@ const VehicleDetails = () => {
   useEffect(() => {
     loadExtras();
   }, []);
+
+  // Recalculate price when relevant data changes
   useEffect(() => {
-    if (bookingData.pickupDate && bookingData.returnDate) {
-      // Use setTimeout to debounce the calculation
+    if (bookingData.pickupDate && bookingData.returnDate && bookingData.pickupTime && bookingData.returnTime) {
       const timer = setTimeout(() => {
         calculateTotalPrice(
           bookingData.pickupDate,
           bookingData.returnDate,
-          bookingData.rateType || 'daily'
+          bookingData.pickupTime,
+          bookingData.returnTime
         );
-      }, 100); // 100ms delay to prevent rapid calculations
+      }, 100);
 
-      return () => clearTimeout(timer); // Cleanup
+      return () => clearTimeout(timer);
+    } else {
+      // Reset if dates not selected
+      setTotalDays(0);
+      setTotalPrice(0);
+      setWeekendSurcharge(0);
+      setTotalBasePrice(0);
     }
-  }, [selectedExtras, bookingData.pickupDate, bookingData.returnDate, bookingData.rateType]);
+  }, [bookingData.pickupDate, bookingData.returnDate, bookingData.pickupTime, bookingData.returnTime, selectedExtras, includeCDW, selectedRateType]);
+
   const loadExtras = async () => {
     try {
       setIsLoadingExtras(true);
@@ -194,6 +259,41 @@ const VehicleDetails = () => {
       setIsLoadingExtras(false);
     }
   };
+  // Helper function to get current hour rounded up to next hour
+  const getCurrentHour = () => {
+    const now = new Date();
+    return now.getHours();
+  };
+
+  // Helper function to get next hour from current time
+  const getNextHour = () => {
+    const now = new Date();
+    return (now.getHours() + 1) % 24;
+  };
+
+  // Generate time options (hour only)
+  const generateTimeOptions = (startHour = 0, endHour = 23) => {
+    const options = [];
+    for (let hour = startHour; hour <= endHour; hour++) {
+      const formattedHour = hour.toString().padStart(2, '0');
+      options.push({
+        value: `${formattedHour}:00`,
+        label: `${formattedHour}:00`
+      });
+    }
+    return options;
+  };
+  // Initialize bookingData with current times
+  useEffect(() => {
+    const currentHour = getCurrentHour();
+    const nextHour = getNextHour();
+
+    setBookingData(prev => ({
+      ...prev,
+      pickupTime: `${currentHour.toString().padStart(2, '0')}:00`,
+      returnTime: `${nextHour.toString().padStart(2, '0')}:00`
+    }));
+  }, []);
   const handleExtraSelection = (extraId, price, name) => {
     setSelectedExtras(prev => {
       const isSelected = prev.some(e => e.id === extraId);
@@ -202,19 +302,19 @@ const VehicleDetails = () => {
       } else {
         return [...prev, {
           id: extraId,
-          price: parseFloat(price) || 0, // Convert to number
+          price: parseFloat(price) || 0,
           name,
           perDay: false
         }];
       }
     });
   };
+
   const generateCartToken = () => {
     const timestamp = Date.now();
     const random = Math.random().toString(36).substr(2, 9);
     return `cart_${timestamp}_${random}`;
   };
-
 
   const cleanupOldCarts = (currentToken) => {
     const oneWeekAgo = Date.now() - (7 * 24 * 60 * 60 * 1000);
@@ -232,48 +332,12 @@ const VehicleDetails = () => {
             }
           }
         } catch (e) {
-
           localStorage.removeItem(key);
         }
       }
     });
   };
-  // Show cart notification
-  const showCartNotification = (vehicleName) => {
-    const notification = document.createElement('div');
-    notification.className = 'cart-notification';
-    notification.innerHTML = `
-    <div class="notification-content">
-      <span class="notification-icon">✓</span>
-      <div>
-        <strong>Added to Cart</strong>
-        <p>${vehicleName}</p>
-      </div>
-      <button onclick="this.parentElement.parentElement.remove()" class="close-notif">×</button>
-    </div>
-  `;
 
-    notification.style.cssText = `
-    position: fixed;
-    top: 20px;
-    right: 20px;
-    background: white;
-    border: 1px solid #ddd;
-    border-radius: 8px;
-    box-shadow: 0 4px 12px rgba(0,0,0,0.15);
-    z-index: 9999;
-    min-width: 300px;
-    animation: slideIn 0.3s ease;
-  `;
-
-    document.body.appendChild(notification);
-
-    setTimeout(() => {
-      if (notification.parentElement) {
-        notification.remove();
-      }
-    }, 5000);
-  };
 
   const addToCart = () => {
     if (!bookingData.pickupDate || !bookingData.returnDate) {
@@ -286,6 +350,16 @@ const VehicleDetails = () => {
       return;
     }
 
+    if (!bookingData.pickupLocation) {
+      displayToast('error', 'Please select a pick-up location');
+      return;
+    }
+
+    if (!acceptTerms) {
+      displayToast('error', 'Please accept the terms and conditions');
+      return;
+    }
+
     let token = localStorage.getItem('cartToken');
     if (!token) {
       token = generateCartToken();
@@ -294,48 +368,77 @@ const VehicleDetails = () => {
       setCartToken(token);
     }
 
-    const getDiscountMultiplier = (rateType, days) => {
-      if (rateType === 'weekly' && days >= 7) {
-        return 0.90;
-      } else if (rateType === 'monthly' && days >= 30) {
-        return 0.80;
-      } else if (rateType === 'monthly' && days >= 7) {
-        return 0.90;
-      }
-      return 1.00;
-    };
+    const isSameDay = bookingData.pickupDate === bookingData.returnDate;
+    const rateType = isSameDay ? 'hourly' : 'daily';
 
-    const calculateWeekendDays = (pickupDate, returnDate) => {
-      const start = new Date(pickupDate);
-      const end = new Date(returnDate);
-      const timeDiff = Math.abs(end - start);
-      const days = Math.ceil(timeDiff / (1000 * 60 * 60 * 24));
+    const baseDailyRate = parseFloat(
+      vehicleDetails?.pricing?.daily || vehicleDetails?.daily || 0
+    );
 
-      let weekendDays = 0;
-      let currentDate = new Date(start);
+    const startDateTime = new Date(`${bookingData.pickupDate}T${bookingData.pickupTime}`);
+    const endDateTime = new Date(`${bookingData.returnDate}T${bookingData.returnTime}`);
 
-      for (let i = 0; i < days; i++) {
-        const dayOfWeek = currentDate.getDay();
-        if (dayOfWeek === 0 || dayOfWeek === 6) {
-          weekendDays++;
+    if (endDateTime <= startDateTime) {
+      displayToast('error', 'Return time must be after pickup time');
+      return;
+    }
+
+    const timeDiffMs = Math.abs(endDateTime - startDateTime);
+    const totalHoursCalc = Math.max(1, Math.ceil(timeDiffMs / (1000 * 60 * 60)));
+    const totalDaysCalc = Math.max(1, Math.ceil(totalHoursCalc / 24));
+
+    let basePrice = 0;
+    let quantity = 0;
+
+    if (rateType === 'hourly') {
+      const hourlyRate = baseDailyRate / 2;
+      quantity = totalHoursCalc;
+      basePrice = hourlyRate * quantity;
+    } else {
+      quantity = totalDaysCalc;
+      basePrice = baseDailyRate * quantity;
+    }
+    let weekendSurcharge = 0;
+    if (rateType === 'daily') {
+      const calculateWeekendDays = (pickupDate, returnDate) => {
+        const start = new Date(pickupDate);
+        const end = new Date(returnDate);
+        const days = Math.ceil(Math.abs(end - start) / (1000 * 60 * 60 * 24));
+
+        let weekendDays = 0;
+        let currentDate = new Date(start);
+
+        for (let i = 0; i < days; i++) {
+          const day = currentDate.getDay();
+          if (day === 0 || day === 6) weekendDays++;
+          currentDate.setDate(currentDate.getDate() + 1);
         }
-        currentDate.setDate(currentDate.getDate() + 1);
+        return weekendDays;
+      };
+
+      const weekendDays = calculateWeekendDays(
+        bookingData.pickupDate,
+        bookingData.returnDate
+      );
+      weekendSurcharge = baseDailyRate * weekendDays * 0.2;
+    }
+    const extrasTotal = selectedExtras.reduce((sum, extra) => {
+      if (rateType === 'daily' && extra.perDay) {
+        return sum + (parseFloat(extra.price) || 0) * totalDaysCalc;
       }
+      return sum + (parseFloat(extra.price) || 0);
+    }, 0);
 
-      return weekendDays;
-    };
+    const cdwDaily = parseFloat(vehicleDetails?.pricing?.cdw || 0);
+    let cdwTotal = 0;
+    if (includeCDW) {
+      cdwTotal =
+        rateType === 'daily'
+          ? cdwDaily * totalDaysCalc
+          : cdwDaily * Math.max(1, Math.ceil(totalHoursCalc / 24));
+    }
 
-    const baseDailyRate = parseFloat(vehicleDetails?.pricing?.daily || vehicleDetails?.daily || 0);
-    const pickup = new Date(bookingData.pickupDate);
-    const returnDate = new Date(bookingData.returnDate);
-    const timeDiff = Math.abs(returnDate - pickup);
-    const days = Math.ceil(timeDiff / (1000 * 60 * 60 * 24));
-    const discountMultiplier = getDiscountMultiplier(bookingData.rateType || 'daily', days);
-    const basePrice = baseDailyRate * days * discountMultiplier;
-    const weekendDays = calculateWeekendDays(bookingData.pickupDate, bookingData.returnDate);
-    const weekendSurcharge = weekendDays > 0 ? (baseDailyRate * discountMultiplier * weekendDays * 0.2) : 0;
-    const extrasTotal = selectedExtras.reduce((sum, extra) => sum + extra.price, 0);
-    const subtotalBeforeTax = basePrice + weekendSurcharge + extrasTotal;
+    const subtotalBeforeTax = basePrice + weekendSurcharge + extrasTotal + cdwTotal;
     const taxAmount = subtotalBeforeTax * 0.08;
     const finalTotal = subtotalBeforeTax + taxAmount;
 
@@ -347,14 +450,27 @@ const VehicleDetails = () => {
       seats: vehicleDetails.seat || 5,
       transmission: vehicleDetails.transmission_name || 'Automatic',
       price_per_day: baseDailyRate,
+      rate_type: rateType,
+      include_cdw: includeCDW,
+      cdw_total: cdwTotal,
+      include_driver: includeDriver,
+      others: {
+        cdw_included: includeCDW,
+        driver_included: includeDriver,
+        cdw_amount: cdwTotal,
+        driver_amount: 0,
+        description: `${includeCDW ? 'CDW, ' : ''}${includeDriver ? 'Driver' : ''}`.replace(/, $/, '')
+      },
 
+      accept_terms: acceptTerms,
       pickup_date: bookingData.pickupDate,
       return_date: bookingData.returnDate,
       pickup_time: bookingData.pickupTime,
       return_time: bookingData.returnTime,
-      pickup_location: bookingData.pickupLocation || 'Main Office',
-      return_location: bookingData.returnLocation || bookingData.pickupLocation || 'Main Office',
-
+      pickup_location: bookingData.pickupLocation,
+      pickup_location_id: bookingData.pickupLocationId,
+      return_location: bookingData.returnLocation || bookingData.pickupLocation,
+      return_location_id: bookingData.returnLocationId || bookingData.pickupLocationId,
       title: bookingForm.title,
       first_name: bookingForm.firstName,
       last_name: bookingForm.lastName,
@@ -362,44 +478,36 @@ const VehicleDetails = () => {
       phone: bookingForm.phoneNumber,
       driving_license: bookingForm.drivingLicense || '',
       additional_requests: bookingForm.additionalRequests || '',
-
       selected_extras: selectedExtras.map(extra => ({
         id: extra.id,
         name: extra.name,
         price: extra.price
       })),
       extras_total: extrasTotal,
-
-      total_days: days,
+      total_hours: rateType === 'hourly' ? quantity : 0,
+      total_days: rateType === 'daily' ? quantity : 0,
       base_price: basePrice,
-      weekend_days: weekendDays,
       weekend_surcharge: weekendSurcharge,
       tax_amount: taxAmount,
       total_price: finalTotal,
-
-      discount_multiplier: discountMultiplier,
-      rate_description: bookingData.rateType === 'weekly' && days >= 7 ? 'Weekly (10% off)' :
-        bookingData.rateType === 'monthly' && days >= 30 ? 'Monthly (20% off)' :
-          'Daily Rate',
-
+      payment_status: 'pending',
+      status: 'in_cart',
       added_at: new Date().toISOString(),
       expires_at: new Date(Date.now() + 24 * 60 * 60 * 1000).toISOString(),
-      status: 'in_cart',
-      payment_status: 'pending',
-
-      image_url: vehiclePhotos[0] || DefaultCar,
-
-      calculation_details: {
-        baseDailyRate,
-        days,
-        discountMultiplier,
-        weekendDays,
-        extrasCount: selectedExtras.length
-      }
+      image_url: vehiclePhotos[0] || DefaultCar
     };
-
     const existingCart = JSON.parse(localStorage.getItem(`cart_${token}`)) || [];
-    const hasConflict = checkDateConflict(existingCart, cartItem);
+
+    const hasConflict = existingCart.some(item => {
+      if (item.vehicle_id === cartItem.vehicle_id) {
+        const a = new Date(item.pickup_date);
+        const b = new Date(item.return_date);
+        const c = new Date(cartItem.pickup_date);
+        const d = new Date(cartItem.return_date);
+        return c < b && d > a;
+      }
+      return false;
+    });
 
     if (hasConflict) {
       displayToast('error', 'This vehicle has scheduling conflict with existing items in cart');
@@ -408,53 +516,41 @@ const VehicleDetails = () => {
 
     const updatedCart = [...existingCart, cartItem];
     localStorage.setItem(`cart_${token}`, JSON.stringify(updatedCart));
-
     setCartCount(updatedCart.length);
+
     displayToast('success', `Vehicle added to cart! Total: RM${finalTotal.toFixed(2)}`);
-    showCartNotification(cartItem.vehicle);
-    setShowBookingForm(false);
+
     navigate('/cart');
   };
 
-  const checkDateConflict = (existingItems, newItem) => {
-    const newPickup = new Date(newItem.pickup_date);
-    const newReturn = new Date(newItem.return_date);
 
-    return existingItems.some(item => {
-      if (item.vehicle_id === newItem.vehicle_id) {
-        const itemPickup = new Date(item.pickup_date);
-        const itemReturn = new Date(item.return_date);
+  const calculateWeekendDays = (pickupDate, returnDate) => {
+    const start = new Date(pickupDate);
+    const end = new Date(returnDate);
+    const timeDiff = Math.abs(end - start);
+    const days = Math.ceil(timeDiff / (1000 * 60 * 60 * 24));
 
-        return (newPickup < itemReturn && newReturn > itemPickup);
+    let weekendDays = 0;
+    let currentDate = new Date(start);
+
+    for (let i = 0; i < days; i++) {
+      const dayOfWeek = currentDate.getDay();
+      if (dayOfWeek === 0 || dayOfWeek === 6) { // Sunday or Saturday
+        weekendDays++;
       }
-      return false;
-    });
+      currentDate.setDate(currentDate.getDate() + 1);
+    }
+
+    return weekendDays;
   };
+
   const handleFormChange = (e) => {
     const { name, value } = e.target;
-
-
     setBookingForm(prev => ({
       ...prev,
       [name]: value
     }));
-
-
-    if (name === 'email') {
-      const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
-      if (!emailRegex.test(value)) {
-
-      }
-    }
-
-    if (name === 'phoneNumber') {
-
-      if (value && !/^[\d\s\+\-\(\)]{8,}$/.test(value)) {
-
-      }
-    }
   };
-
 
   const getVehicleImage = (vehicleName) => {
     if (!vehicleName) return DefaultCar;
@@ -477,7 +573,6 @@ const VehicleDetails = () => {
       'nissan urvan nv350': NissanUrvan,
     };
 
-
     const exactMatch = vehicleImageMap[vehicleNameLower];
     if (exactMatch) return exactMatch;
 
@@ -490,242 +585,197 @@ const VehicleDetails = () => {
     return DefaultCar;
   };
 
-
   const getVehiclePhotos = () => {
-
     const mainImage = getVehicleImage(vehicleDetails?.vehicle);
-
 
     let additionalPhotos = [];
 
-
     if (vehicleDetails?.photo) {
       if (Array.isArray(vehicleDetails.photo)) {
-
         additionalPhotos = vehicleDetails.photo.filter(photo => {
           return typeof photo === 'string' && photo.trim().length > 0;
         });
       } else if (typeof vehicleDetails.photo === 'string') {
-
         additionalPhotos = vehicleDetails.photo.split(',').map(p => p.trim()).filter(p => p.length > 0);
       }
     }
 
-
     const allPhotos = [mainImage, ...additionalPhotos].filter(Boolean);
-
-
-    console.log('Vehicle Photos:', allPhotos);
-    console.log('Vehicle Details:', vehicleDetails);
-
     return allPhotos;
   };
 
   // Get photos array
   const vehiclePhotos = getVehiclePhotos();
 
-  // Vehicle features based on API response
-  const vehicleFeatures = [
-    { name: "Seats", icon: <MdAirlineSeatReclineNormal className="feature-icon" />, value: vehicleDetails?.seat || 5 },
-    { name: "Transmission", icon: <GiGearStickPattern className="feature-icon" />, value: vehicleDetails?.transmission_name || (vehicleDetails?.transmission === 1 ? 'Automatic' : 'Manual') },
-    { name: "Fuel Type", icon: <FaGasPump className="feature-icon" />, value: "Petrol" },
-    { name: "Engine", icon: <FaCogs className="feature-icon" />, value: "1.5L" },
-    { name: "Mileage", icon: <MdOutlineDirectionsCar className="feature-icon" />, value: "Unlimited" },
-  ];
 
-  const nextSlide = () => {
-    setCurrentSlide(prev =>
-      prev === (vehiclePhotos.length || 0) - 1 ? 0 : prev + 1
-    );
-  };
+  const calculateTotalPrice = (pickup, returnDate, pickupTime = "09:00", returnTime = "17:00") => {
+    if (pickup && returnDate && pickupTime && returnTime) {
+      try {
+        // Format times to 24-hour format
+        const formatTime = (time) => {
+          if (!time) return "09:00";
+          let cleanTime = time.toString().toUpperCase().replace(/\s/g, '');
 
-  const prevSlide = () => {
-    setCurrentSlide(prev =>
-      prev === 0 ? (vehiclePhotos.length || 0) - 1 : prev - 1
-    );
-  };
+          if (cleanTime.includes("AM") || cleanTime.includes("PM")) {
+            const timePart = cleanTime.replace(/[APM]/g, '');
+            const [hours, minutes] = timePart.split(":").map(Number);
+            let hour = hours;
 
-  const handleCloseFullscreen = () => {
-    setIsFullscreen(false);
-    document.body.style.overflow = 'auto';
-  };
+            if (cleanTime.includes("PM") && hour < 12) hour += 12;
+            if (cleanTime.includes("AM") && hour === 12) hour = 0;
 
-  const handlePhotoClick = (index) => {
-    setSelectedImageIndex(index);
-    setIsFullscreen(true);
-    document.body.style.overflow = 'hidden';
-  };
+            return `${hour.toString().padStart(2, '0')}:${minutes.toString().padStart(2, '0')}`;
+          }
+          return cleanTime;
+        };
 
-  const calculateTotalPrice = (pickup, returnDate, rateType = 'daily') => {
-    if (pickup && returnDate) {
-      const start = new Date(pickup);
-      const end = new Date(returnDate);
+        const formattedPickupTime = formatTime(pickupTime);
+        const formattedReturnTime = formatTime(returnTime);
+        const driverTotal = includeDriver ? 0 : 0;
+        const startDateTime = new Date(`${pickup}T${formattedPickupTime}`);
+        const endDateTime = new Date(`${returnDate}T${formattedReturnTime}`);
 
-      const timeDiff = Math.abs(end - start);
-      const days = Math.ceil(timeDiff / (1000 * 60 * 60 * 24));
+        // Ensure end is after start
+        if (endDateTime <= startDateTime) {
+          setTotalDays(0);
+          setTotalHours(0);
+          setTotalPrice(0);
+          setWeekendSurcharge(0);
+          setTotalBasePrice(0);
+          return null;
+        }
 
-      if (days > 0) {
-        setTotalDays(days);
+        // Calculate total hours
+        const timeDiffMs = Math.abs(endDateTime - startDateTime);
+        const totalHoursCalc = Math.max(1, Math.ceil(timeDiffMs / (1000 * 60 * 60)));
+        const totalDaysCalc = Math.max(1, Math.ceil(totalHoursCalc / 24));
 
         // Get base daily rate
         const baseDailyRate = parseFloat(vehicleDetails?.pricing?.daily || vehicleDetails?.daily || 0);
 
-        // Determine discount based on rate type and days
-        let discountMultiplier = 1.00;
-        let rateDescription = 'Daily Rate';
+        // AUTO-DETECT RATE TYPE:
+        // Same day = Hourly, Different days = Daily
+        const isSameDay = pickup === returnDate;
+        let rateType = isSameDay ? 'hourly' : 'daily';
+        let basePrice = 0;
+        let quantity = 0;
 
-        if (rateType === 'weekly') {
-          if (days >= 7) {
-            discountMultiplier = 0.90;
-            rateDescription = 'Weekly Rate (10% off)';
-          } else {
-            discountMultiplier = 1.00;
-            rateDescription = 'Daily Rate (Auto-downgraded)';
-          }
-        } else if (rateType === 'monthly') {
-          if (days >= 30) {
-            discountMultiplier = 0.80;
-            rateDescription = 'Monthly Rate (20% off)';
-          } else if (days >= 7) {
-            discountMultiplier = 0.90;
-            rateDescription = 'Weekly Rate (Auto-downgraded)';
-          } else {
-            discountMultiplier = 1.00;
-            rateDescription = 'Daily Rate (Auto-downgraded)';
-          }
+        if (rateType === 'hourly') {
+          // Hourly rate = daily rate / 2
+          const hourlyRate = baseDailyRate / 2;
+          quantity = totalHoursCalc;
+          basePrice = hourlyRate * quantity;
+          setTotalHours(quantity);
+          setTotalDays(0);
+        } else {
+          // Daily rate
+          quantity = totalDaysCalc;
+          basePrice = baseDailyRate * quantity;
+          setTotalDays(quantity);
+          setTotalHours(0);
         }
 
-        const baseRate = baseDailyRate * days * discountMultiplier;
-
-        let weekendSurcharge = 0;
-        let weekendDays = 0;
-        let currentDate = new Date(start);
-
-        for (let i = 0; i < days; i++) {
-          const dayOfWeek = currentDate.getDay();
-          if (dayOfWeek === 0 || dayOfWeek === 6) {
-            weekendDays++;
-          }
-          currentDate.setDate(currentDate.getDate() + 1);
+        // Calculate weekend surcharge (only for daily rates)
+        let weekendSurchargeCalc = 0;
+        if (rateType === 'daily') {
+          const weekendDays = calculateWeekendDays(pickup, returnDate);
+          weekendSurchargeCalc = baseDailyRate * weekendDays * 0.2;
         }
 
-        if (weekendDays > 0) {
-          const dailyDiscountedRate = (baseDailyRate * discountMultiplier);
-          weekendSurcharge = dailyDiscountedRate * weekendDays * 0.2;
-        }
-
+        // Calculate extras total (per day for daily rates, per rental for hourly)
         const extrasTotal = selectedExtras.reduce((sum, extra) => {
+          if (rateType === 'daily' && extra.perDay) {
+            return sum + (parseFloat(extra.price) || 0) * totalDaysCalc;
+          }
           return sum + (parseFloat(extra.price) || 0);
         }, 0);
 
-        // IMPORTANT: Tax should be on (base + weekend surcharge + extras)
-        const subtotalBeforeTax = baseRate + weekendSurcharge + extrasTotal;
+        // Calculate CDW
+        const cdwDaily = parseFloat(vehicleDetails?.pricing?.cdw || 0);
+        let cdwTotal = 0;
+        if (includeCDW) {
+          if (rateType === 'daily') {
+            cdwTotal = cdwDaily * totalDaysCalc;
+          } else {
+            // For hourly, CDW is per day (minimum 1 day)
+            cdwTotal = cdwDaily * Math.max(1, Math.ceil(totalHoursCalc / 24));
+          }
+        }
 
-        const tax = subtotalBeforeTax * 0.08;
+        // Calculate totals
+        const subtotalBeforeTax = basePrice + weekendSurcharge + extrasTotal + cdwTotal + driverTotal;
+        const taxAmount = subtotalBeforeTax * 0.08;
+        const finalTotal = subtotalBeforeTax + taxAmount;
 
-        const finalTotal = subtotalBeforeTax + tax;
-
+        // Update state
         setTotalPrice(finalTotal);
-        setWeekendSurcharge(weekendSurcharge);
-        setTotalBasePrice(baseRate); // This should be just vehicle base price
-
-        console.log('Price Calculation Breakdown:', {
-          days,
-          baseDailyRate,
-          discountMultiplier,
-          baseRate,
-          weekendDays,
-          weekendSurcharge,
-          extrasTotal,
-          selectedExtras: selectedExtras.map(e => `${e.name}: RM${e.price}`),
-          subtotalBeforeTax,
-          tax,
-          finalTotal,
-          rateDescription
-        });
+        setWeekendSurcharge(weekendSurchargeCalc);
+        setTotalBasePrice(basePrice);
 
         return {
-          days,
-          baseDailyRate,
-          discountMultiplier,
-          baseRate,
-          weekendDays,
-          weekendSurcharge,
+          rateType,
+          basePrice,
+          weekendSurcharge: weekendSurchargeCalc,
           extrasTotal,
-          selectedExtras: [...selectedExtras],
-          subtotalBeforeTax,
-          tax,
+          cdwTotal,
+          taxAmount,
           finalTotal,
-          rateDescription
+          totalHours: totalHoursCalc,
+          totalDays: totalDaysCalc
         };
+      } catch (error) {
+        console.error('Error calculating price:', error);
+        setTotalDays(0);
+        setTotalHours(0);
+        setTotalPrice(0);
+        setWeekendSurcharge(0);
+        setTotalBasePrice(0);
       }
+    } else {
+      setTotalDays(0);
+      setTotalHours(0);
+      setTotalPrice(0);
+      setWeekendSurcharge(0);
+      setTotalBasePrice(0);
     }
-
-    setTotalDays(0);
-    setTotalPrice(0);
-    setWeekendSurcharge(0);
-    setTotalBasePrice(0);
-
     return null;
   };
-  const getRateDescription = () => {
-    const days = totalDays;
-    const rateType = bookingData.rateType || 'daily';
 
-    if (rateType === 'weekly' && days < 7) {
-      return `Weekly Rate - Need ${7 - days} more days`;
-    }
-    if (rateType === 'monthly') {
-      if (days < 7) {
-        return `Monthly Rate - Need ${30 - days} more days`;
-      } else if (days < 30) {
-        return `Monthly Rate - Need ${30 - days} more days`;
-      }
-    }
-
-    return rateType === 'weekly' ? 'Weekly Rate (10% off)' :
-      rateType === 'monthly' ? 'Monthly Rate (20% off)' : 'Daily Rate';
-  };
-  const handleInputChange = async (e) => {
+  const handleInputChange = (e) => {
     const { name, value } = e.target;
+
     setBookingData((prev) => {
       const updatedData = { ...prev, [name]: value };
 
+      // Handle date validation
       if (name === "pickupDate" && value && prev.returnDate) {
         const pickup = new Date(value);
         const returnDate = new Date(prev.returnDate);
         if (pickup >= returnDate) {
           updatedData.returnDate = "";
+          updatedData.returnTime = ""; // Reset return time when date changes
         }
       }
-      if ((name === "pickupDate" || name === "returnDate") && prev.pickupDate && (prev.returnDate || value)) {
-        const pickup = new Date(name === "pickupDate" ? value : prev.pickupDate);
-        const returnDate = new Date(name === "returnDate" ? value : prev.returnDate);
-        const daysDiff = Math.ceil((returnDate - pickup) / (1000 * 60 * 60 * 24));
 
-        if (prev.rateType === 'weekly' && daysDiff < 7) {
-
-          updatedData.rateType = 'daily';
-        } else if (prev.rateType === 'monthly' && daysDiff < 30) {
-
-          if (daysDiff >= 7) {
-            updatedData.rateType = 'weekly';
-          } else {
-            updatedData.rateType = 'daily';
+      // Handle pickup time change - reset return time if invalid
+      if (name === "pickupTime" && value) {
+        if (prev.returnDate === prev.pickupDate && prev.returnTime) {
+          const pickupHour = parseInt(value.split(':')[0]);
+          const returnHour = parseInt(prev.returnTime.split(':')[0]);
+          if (returnHour <= pickupHour) {
+            updatedData.returnTime = `${(pickupHour + 1).toString().padStart(2, '0')}:00`;
           }
         }
       }
 
       return updatedData;
     });
+  };
 
-    if (name === "pickupDate" || name === "returnDate") {
-      calculateTotalPrice(
-        name === "pickupDate" ? value : bookingData.pickupDate,
-        name === "returnDate" ? value : bookingData.returnDate,
-        bookingData.rateType || 'daily'
-      );
-    }
+  // Handle rate type selection
+  const handleRateTypeChange = (rateType) => {
+    setSelectedRateType(rateType);
+    setBookingData(prev => ({ ...prev, rateType }));
   };
 
   const fetchUserInfo = async () => {
@@ -734,8 +784,6 @@ const VehicleDetails = () => {
 
     try {
       const userData = await fetchUserData(userid);
-      console.log('User information:', userData);
-
       setBookingForm(prev => ({
         ...prev,
         title: userData.utitle || 'Mr.',
@@ -757,86 +805,20 @@ const VehicleDetails = () => {
     setTimeout(() => setShowToast(false), 5000);
   };
 
-
-
   useEffect(() => {
     if (showBookingForm) {
       fetchUserInfo();
     }
   }, [showBookingForm]);
 
-  // Scroll locking effects
-  useEffect(() => {
-    if (showAllPhotos) {
-      const scrollY = window.scrollY;
-      document.body.style.position = 'fixed';
-      document.body.style.top = `-${scrollY}px`;
-      document.body.style.width = '100%';
-      document.body.style.overflow = 'hidden';
-
-      const scrollbarWidth = window.innerWidth - document.documentElement.clientWidth;
-      if (scrollbarWidth > 0) {
-        document.body.style.paddingRight = `${scrollbarWidth}px`;
-      }
-
-      return () => {
-        document.body.style.position = '';
-        document.body.style.top = '';
-        document.body.style.width = '';
-        document.body.style.overflow = '';
-        document.body.style.paddingRight = '';
-        window.scrollTo(0, scrollY);
-      };
-    }
-  }, [showAllPhotos]);
-
-  useEffect(() => {
-    if (showBookingForm) {
-      const scrollY = window.scrollY;
-      document.body.style.position = 'fixed';
-      document.body.style.top = `-${scrollY}px`;
-      document.body.style.width = '100%';
-      document.body.style.overflow = 'hidden';
-
-      const scrollbarWidth = window.innerWidth - document.documentElement.clientWidth;
-      if (scrollbarWidth > 0) {
-        document.body.style.paddingRight = `${scrollbarWidth}px`;
-      }
-
-      return () => {
-        document.body.style.position = '';
-        document.body.style.top = '';
-        document.body.style.width = '';
-        document.body.style.overflow = '';
-        document.body.style.paddingRight = '';
-        window.scrollTo(0, scrollY);
-      };
-    }
-  }, [showBookingForm]);
-
-  useEffect(() => {
-    if (isFullscreen) {
-      const scrollY = window.scrollY;
-      document.body.style.position = 'fixed';
-      document.body.style.top = `-${scrollY}px`;
-      document.body.style.width = '100%';
-      document.body.style.overflow = 'hidden';
-
-      const scrollbarWidth = window.innerWidth - document.documentElement.clientWidth;
-      if (scrollbarWidth > 0) {
-        document.body.style.paddingRight = `${scrollbarWidth}px`;
-      }
-
-      return () => {
-        document.body.style.position = '';
-        document.body.style.top = '';
-        document.body.style.width = '';
-        document.body.style.overflow = '';
-        document.body.style.paddingRight = '';
-        window.scrollTo(0, scrollY);
-      };
-    }
-  }, [isFullscreen]);
+  // Vehicle features
+  const vehicleFeatures = [
+    { name: "Seats", icon: <MdAirlineSeatReclineNormal className="feature-icon" />, value: vehicleDetails?.seat || 5 },
+    { name: "Transmission", icon: <GiGearStickPattern className="feature-icon" />, value: vehicleDetails?.transmission_name || (vehicleDetails?.transmission === 1 ? 'Automatic' : 'Manual') },
+    { name: "Fuel Type", icon: <FaGasPump className="feature-icon" />, value: "Petrol" },
+    { name: "Engine", icon: <FaCogs className="feature-icon" />, value: "1.5L" },
+    { name: "Mileage", icon: <MdOutlineDirectionsCar className="feature-icon" />, value: "Unlimited" },
+  ];
 
   return (
     <div>
@@ -844,274 +826,218 @@ const VehicleDetails = () => {
         <AuthProvider>
           <Navbar />
           <div className="vehicle-details-main-container">
-            {/* Single Stretched Image */}
-            <div className="single-stretched-image-container">
+            {/* Main Vehicle Image */}
+            <div className="vehicle-main-image-container">
               {vehiclePhotos[0] && (
                 <img
                   src={vehiclePhotos[0]}
-                  onClick={() => setShowAllPhotos(true)}
-                  className="single-stretched-image"
+                  className="vehicle-main-image"
                   alt={vehicleDetails?.vehicle}
                 />
               )}
-              <div className="view-all-photos-btn" onClick={() => setShowAllPhotos(true)}>
+            </div>
+
+            {/* View All Photos Button
+            <div className="view-photos-button-container">
+              <button
+                className="view-all-photos-btn"
+                onClick={() => setShowAllPhotos(true)}
+              >
                 View all photos ({vehiclePhotos.length})
-              </div>
-            </div>
-
-            {/* Mobile Slideshow */}
-            <div className="mobile-slideshow">
-              {vehiclePhotos.map((photo, index) => (
-                <div key={index} className={`slide ${currentSlide === index ? 'active' : ''}`}
-                  style={{ transform: `translateX(${100 * (index - currentSlide)}%)`, transition: 'transform 0.3s' }}>
-                  <img
-                    src={photo}
-                    alt={`${vehicleDetails?.vehicle} image ${index + 1}`}
-                    onClick={() => setShowAllPhotos(true)}
-                  />
-                </div>
-              ))}
-
-              {vehiclePhotos.length > 1 && (
-                <>
-                  <button className="slide-nav prev" onClick={prevSlide} aria-label="Previous image">
-                    <IoIosArrowBack />
-                  </button>
-
-                  <button className="slide-nav next" onClick={nextSlide} aria-label="Next image">
-                    <IoIosArrowForward />
-                  </button>
-
-                  <div className="slide-indicators">
-                    {vehiclePhotos.map((_, index) => (
-                      <div
-                        key={index}
-                        className={`indicator ${currentSlide === index ? 'active' : ''}`}
-                        onClick={() => setCurrentSlide(index)}
-                        aria-label={`Go to image ${index + 1}`}
-                      ></div>
-                    ))}
-                  </div>
-                </>
-              )}
-            </div>
-
-            {/* All Photos View */}
-            {showAllPhotos && (
-              <div className="all-photos-view">
-                <div className="photos-header">
-                  <button className="back-button" onClick={() => setShowAllPhotos(false)}>
-                    <IoReturnUpBackOutline /> <span>Back to vehicle</span>
-                  </button>
-                </div>
-
-                <div className="photos-grid">
-                  <div className="photos-container">
-                    {vehiclePhotos.map((photo, index) => (
-                      <div key={index} className="photo-section">
-                        <img
-                          src={photo}
-                          alt={`${vehicleDetails?.vehicle} - photo ${index + 1}`}
-                          onClick={() => handlePhotoClick(index)}
-                        />
-                      </div>
-                    ))}
-                  </div>
-                </div>
-              </div>
-            )}
-
-            {/* Fullscreen View */}
-            {isFullscreen && (
-              <div className="fullscreen-overlay">
-                <div className="fullscreen-header">
-                  <button className="close-btn" onClick={handleCloseFullscreen}>
-                    <IoIosClose />
-                  </button>
-                  <div className="image-counter">
-                    {selectedImageIndex + 1} / {vehiclePhotos.length}
-                  </div>
-                </div>
-
-                <div className="fullscreen-content">
-                  <button
-                    className="nav-btn prev-btn"
-                    onClick={() => setSelectedImageIndex((prev) =>
-                      prev === 0 ? (vehiclePhotos.length || 0) - 1 : prev - 1
-                    )}
-                  >
-                    <IoIosArrowBack />
-                  </button>
-
-                  {vehiclePhotos[selectedImageIndex] && (
-                    <img
-                      src={vehiclePhotos[selectedImageIndex]}
-                      alt={`${vehicleDetails?.vehicle} fullscreen view`}
-                      className="fullscreen-image"
-                    />
-                  )}
-
-                  <button
-                    className="nav-btn next-btn"
-                    onClick={() => setSelectedImageIndex((prev) =>
-                      prev === (vehiclePhotos.length || 0) - 1 ? 0 : prev + 1
-                    )}
-                  >
-                    <IoIosArrowForward />
-                  </button>
-                </div>
-              </div>
-            )}
+              </button>
+            </div> */}
 
             {/* Details Container */}
             <div className="Details_container">
-              <div className="Description_container">
-                <div className="first_container">
-                  <div className="Vehicle_name_container">
-                    <h2 className="Vehicle_name">{vehicleDetails?.vehicle}</h2>
-                    <div className='Rating_Container'>
-                      {vehicleDetails?.rating ? (
-                        <>
-                          <p className="Rating_score">
-                            {Number.isInteger(vehicleDetails.rating)
-                              ? vehicleDetails.rating.toFixed(1)
-                              : vehicleDetails.rating.toFixed(2).replace(/\.?0+$/, '')}
-                          </p>
-                          <FaStar className='icon_star' />
+              <div className="main-layout">
+                {/* Left Side - Vehicle Details */}
+                <div className="left-side">
+                  <div className="first_container">
+                    <div className="Vehicle_name_container">
+                      <h2 className="Vehicle_name">{vehicleDetails?.vehicle}</h2>
+                      <div className='Rating_Container'>
+                        {vehicleDetails?.rating ? (
+                          <>
+                            <p className="Rating_score">
+                              {Number.isInteger(vehicleDetails.rating)
+                                ? vehicleDetails.rating.toFixed(1)
+                                : vehicleDetails.rating.toFixed(2).replace(/\.?0+$/, '')}
+                            </p>
+                            <FaStar className='icon_star' />
+                            <button className="show-reviews-btn" onClick={() => setShowReviews(true)}>
+                              {vehicleDetails.reviews_count || 0} reviews
+                            </button>
+                          </>
+                        ) : (
                           <button className="show-reviews-btn" onClick={() => setShowReviews(true)}>
-                            {vehicleDetails.reviews_count || 0} reviews
+                            No reviews yet
                           </button>
-                        </>
-                      ) : (
-                        <button className="show-reviews-btn" onClick={() => setShowReviews(true)}>
-                          No reviews yet
-                        </button>
-                      )}
-                    </div>
-                  </div>
-
-                  <Reviews
-                    isOpen={showReviews}
-                    onClose={() => setShowReviews(false)}
-                    vehicleId={vehicleDetails?.id}
-                  />
-
-                  <div className="sub_details">
-                    <div className="Vehicle_feature">
-                      <FaCar className="icon_vehicle" />
-                      <p>{vehicleDetails?.brand_name || vehicleDetails?.brand || 'Brand'}</p>
+                        )}
+                      </div>
                     </div>
 
-                    <div className="Vehicle_feature">
-                      <MdAirlineSeatReclineNormal className="icon_seats" />
-                      <p>{vehicleDetails?.seat || 5} Seats</p>
+                    <Reviews
+                      isOpen={showReviews}
+                      onClose={() => setShowReviews(false)}
+                      vehicleId={vehicleDetails?.id}
+                    />
+
+                    <div className="sub_details">
+                      <div className="Vehicle_feature">
+                        <FaCar className="icon_vehicle" />
+                        <p>{vehicleDetails?.brand_name || vehicleDetails?.brand || 'Brand'}</p>
+                      </div>
+
+                      <div className="Vehicle_feature">
+                        <MdAirlineSeatReclineNormal className="icon_seats" />
+                        <p>{vehicleDetails?.seat || 5} Seats</p>
+                      </div>
+
+                      <div className="Vehicle_feature">
+                        <GiGearStickPattern className="icon_transmission" />
+                        <p>{vehicleDetails?.transmission_name || 'Transmission'}</p>
+                      </div>
                     </div>
 
-                    <div className="Vehicle_feature">
-                      <GiGearStickPattern className="icon_transmission" />
-                      <p>{vehicleDetails?.transmission_name || 'Transmission'}</p>
+                    {/* Vehicle Rates Display */}
+                    <div className="rates-display-section">
+                      <h3 className="rates-title">Rental Rates</h3>
+                      <div className="rates-display">
+                        {/* Always show hourly rate (daily rate ÷ 2) */}
+                        <div className="rate-display-item">
+                          <span className="rate-label">Hourly:</span>
+                          <span className="rate-value">
+                            RM{(parseFloat(vehicleDetails?.pricing?.daily || vehicleDetails?.daily || 0) / 2).toFixed(2)}/hour
+                          </span>
+                        </div>
+
+                        <div className="rate-display-item">
+                          <span className="rate-label">Daily:</span>
+                          <span className="rate-value">
+                            RM{parseFloat(vehicleDetails?.pricing?.daily || vehicleDetails?.daily || 0).toFixed(2)}/day
+                          </span>
+                        </div>
+
+                        {vehicleDetails?.pricing?.weekly > 0 && (
+                          <div className="rate-display-item">
+                            <span className="rate-label">Weekly:</span>
+                            <span className="rate-value">
+                              RM{parseFloat(vehicleDetails?.pricing?.weekly || 0).toFixed(2)}/week
+                            </span>
+                          </div>
+                        )}
+
+                        {vehicleDetails?.pricing?.monthly > 0 && (
+                          <div className="rate-display-item">
+                            <span className="rate-label">Monthly:</span>
+                            <span className="rate-value">
+                              RM{parseFloat(vehicleDetails?.pricing?.monthly || 0).toFixed(2)}/month
+                            </span>
+                          </div>
+                        )}
+                      </div>
                     </div>
-                  </div>
+                    <hr className="custom-line" />
 
-                  <hr className="custom-line" />
-
-                  {/* Vehicle Features */}
-                  <div className="Vehicle_features_container">
-                    <h2 className="Features_text">Vehicle Features</h2>
-                    <div className="features-grid">
-                      {vehicleFeatures.slice(0, 5).map((feature, index) => (
-                        <div key={index} className="feature-item">
-                          {feature.icon}
-                          <div className="feature-info">
-                            <span className="feature-name">{feature.name}</span>
-                            <span className="feature-value">{feature.value}</span>
+                    {/* Driver Information */}
+                    <div className="driver-info-section">
+                      <h3 className="section-title">Driver Information</h3>
+                      <div className="form-grid-compact">
+                        <div className="form-group-compact title-group">
+                          <label>Title *</label>
+                          <div className="title-options-compact">
+                            {['Mr.', 'Mrs.', 'Ms.', 'Dr.'].map(title => (
+                              <label className="radio-label-compact" key={title}>
+                                <input
+                                  type="radio"
+                                  name="title"
+                                  value={title}
+                                  checked={bookingForm.title === title}
+                                  onChange={handleFormChange}
+                                  required
+                                />
+                                <span>{title}</span>
+                              </label>
+                            ))}
                           </div>
                         </div>
-                      ))}
+
+                        <div className="form-row-compact">
+                          <div className="form-group-compact">
+                            <label>First Name *</label>
+                            <input
+                              type="text"
+                              name="firstName"
+                              value={bookingForm.firstName}
+                              onChange={handleFormChange}
+                              placeholder="First name"
+                              required
+                            />
+                          </div>
+                          <div className="form-group-compact">
+                            <label>Last Name *</label>
+                            <input
+                              type="text"
+                              name="lastName"
+                              value={bookingForm.lastName}
+                              onChange={handleFormChange}
+                              placeholder="Last name"
+                              required
+                            />
+                          </div>
+                        </div>
+
+                        <div className="form-row-compact">
+                          <div className="form-group-compact">
+                            <label>Email *</label>
+                            <input
+                              type="email"
+                              name="email"
+                              value={bookingForm.email}
+                              onChange={handleFormChange}
+                              placeholder="Email address"
+                              required
+                            />
+                          </div>
+                          <div className="form-group-compact">
+                            <label>Phone *</label>
+                            <input
+                              type="tel"
+                              name="phoneNumber"
+                              value={bookingForm.phoneNumber}
+                              onChange={handleFormChange}
+                              placeholder="Phone number"
+                              required
+                            />
+                          </div>
+                        </div>
+
+                        <div className="form-group-compact">
+                          <label>Driving License No. *</label>
+                          <input
+                            type="text"
+                            name="drivingLicense"
+                            value={bookingForm.drivingLicense}
+                            onChange={handleFormChange}
+                            placeholder="Driving license number"
+                            required
+                          />
+                        </div>
+                      </div>
                     </div>
                   </div>
                 </div>
 
-                {/* Booking Card */}
-                <div className="second_container">
+                {/* Right Side - Booking Form */}
+                <div className="right-side">
                   <div className="booking_card">
+                    {/* Price Section */}
                     <div className="price_section">
-                      <span className="vehicle_price">RM{parseFloat(vehicleDetails?.pricing?.daily || vehicleDetails?.daily || 0).toFixed(2)}</span>
+                      <span className="vehicle_price">From RM{parseFloat(vehicleDetails?.pricing?.daily || vehicleDetails?.daily || 0).toFixed(2)}</span>
                       <span className="price_day">/day</span>
                     </div>
 
-                    <div className="rates_section">
-                      <div className="rate-options">
-                        <button
-                          className={`rate-option ${bookingData.rateType === 'daily' ? 'active' : ''}`}
-                          onClick={() => {
-                            setBookingData({ ...bookingData, rateType: 'daily' });
-                            calculateTotalPrice(bookingData.pickupDate, bookingData.returnDate, 'daily');
-                          }}
-                        >
-                          Daily
-                        </button>
-                        <button
-                          className={`rate-option ${bookingData.rateType === 'weekly' ? 'active' : ''}`}
-                          onClick={() => {
-                            if (bookingData.pickupDate) {
-                              const pickup = new Date(bookingData.pickupDate);
-                              const currentReturn = bookingData.returnDate ? new Date(bookingData.returnDate) : new Date(pickup);
-                              const daysDiff = Math.ceil((currentReturn - pickup) / (1000 * 60 * 60 * 24));
-
-                              if (daysDiff < 7) {
-                                const minReturnDate = new Date(pickup);
-                                minReturnDate.setDate(pickup.getDate() + 7);
-
-                                setBookingData(prev => ({
-                                  ...prev,
-                                  rateType: 'weekly',
-                                  returnDate: minReturnDate.toISOString().split('T')[0]
-                                }));
-                                calculateTotalPrice(bookingData.pickupDate, minReturnDate.toISOString().split('T')[0], 'weekly');
-                              } else {
-                                setBookingData(prev => ({ ...prev, rateType: 'weekly' }));
-                                calculateTotalPrice(bookingData.pickupDate, bookingData.returnDate, 'weekly');
-                              }
-                            } else {
-                              setBookingData(prev => ({ ...prev, rateType: 'weekly' }));
-                            }
-                          }}
-                        >
-                          Weekly (Save 10%) - Min. 7 days
-                        </button>
-                        <button
-                          className={`rate-option ${bookingData.rateType === 'monthly' ? 'active' : ''}`}
-                          onClick={() => {
-                            if (bookingData.pickupDate) {
-                              const pickup = new Date(bookingData.pickupDate);
-                              const currentReturn = bookingData.returnDate ? new Date(bookingData.returnDate) : new Date(pickup);
-                              const daysDiff = Math.ceil((currentReturn - pickup) / (1000 * 60 * 60 * 24));
-
-                              if (daysDiff < 30) {
-                                const minReturnDate = new Date(pickup);
-                                minReturnDate.setDate(pickup.getDate() + 30);
-
-                                setBookingData(prev => ({
-                                  ...prev,
-                                  rateType: 'monthly',
-                                  returnDate: minReturnDate.toISOString().split('T')[0]
-                                }));
-                                calculateTotalPrice(bookingData.pickupDate, minReturnDate.toISOString().split('T')[0], 'monthly');
-                              } else {
-                                setBookingData(prev => ({ ...prev, rateType: 'monthly' }));
-                                calculateTotalPrice(bookingData.pickupDate, bookingData.returnDate, 'monthly');
-                              }
-                            } else {
-                              setBookingData(prev => ({ ...prev, rateType: 'monthly' }));
-                            }
-                          }}
-                        >
-                          Monthly (Save 20%) - Min. 30 days
-                        </button>
-                      </div>
-                    </div>
-
+                    {/* Dates Section */}
                     <div className="dates_section">
                       <div className="date_input">
                         <div className="date_label">PICK-UP DATE <span className="required-star">*</span></div>
@@ -1124,9 +1050,6 @@ const VehicleDetails = () => {
                           min={new Date().toISOString().split("T")[0]}
                           required
                         />
-                        {!bookingData.pickupDate && (
-                          <div className="field-hint">Select pickup date first</div>
-                        )}
                       </div>
 
                       <div className="date_input">
@@ -1138,61 +1061,166 @@ const VehicleDetails = () => {
                           value={bookingData.returnDate}
                           onChange={handleInputChange}
                           disabled={!bookingData.pickupDate}
-                          min={
-                            bookingData.pickupDate
-                              ? (() => {
-                                const pickup = new Date(bookingData.pickupDate);
-                                const minDate = new Date(pickup);
-                                if (bookingData.rateType === 'weekly') {
-                                  minDate.setDate(pickup.getDate() + 7);
-                                } else if (bookingData.rateType === 'monthly') {
-                                  minDate.setDate(pickup.getDate() + 30);
-                                } else {
-                                  minDate.setDate(pickup.getDate() + 1);
-                                }
-
-                                return minDate.toISOString().split('T')[0];
-                              })()
-                              : ""
-                          }
+                          min={bookingData.pickupDate || new Date().toISOString().split("T")[0]}
                           required
                         />
-                        {!bookingData.pickupDate && (
-                          <div className="field-hint">Select pickup date first</div>
-                        )}
-                        {bookingData.pickupDate && !bookingData.returnDate && (
-                          <div className="field-hint">Select return date to calculate price</div>
-                        )}
                       </div>
                     </div>
 
+                    {/* Time Section */}
                     <div className="time_section">
                       <div className="time_input">
                         <div className="time_label">PICK-UP TIME</div>
-                        <input
-                          type="time"
+                        <select
                           name="pickupTime"
-                          className="time_picker"
+                          className="time_dropdown"
                           value={bookingData.pickupTime}
                           onChange={handleInputChange}
-                        />
+                          disabled={!bookingData.pickupDate}
+                        >
+                          <option value="">Select time</option>
+                          {(() => {
+                            // Generate pickup time options based on selected date
+                            const isToday = bookingData.pickupDate === new Date().toISOString().split("T")[0];
+                            const startHour = isToday ? getCurrentHour() : 0;
+                            const timeOptions = generateTimeOptions(startHour, 23);
+
+                            return timeOptions.map((option, index) => (
+                              <option key={`pickup-${index}`} value={option.value}>
+                                {option.label}
+                              </option>
+                            ));
+                          })()}
+                        </select>
                       </div>
+
                       <div className="time_input">
                         <div className="time_label">RETURN TIME</div>
-                        <input
-                          type="time"
+                        <select
                           name="returnTime"
-                          className="time_picker"
+                          className="time_dropdown"
                           value={bookingData.returnTime}
                           onChange={handleInputChange}
-                        />
+                          disabled={!bookingData.pickupDate || !bookingData.returnDate}
+                        >
+                          <option value="">Select time</option>
+                          {(() => {
+                            if (!bookingData.pickupDate || !bookingData.returnDate || !bookingData.pickupTime) {
+                              return null;
+                            }
+
+                            const isSameDay = bookingData.pickupDate === bookingData.returnDate;
+                            const pickupHour = parseInt(bookingData.pickupTime.split(':')[0]);
+                            const isToday = bookingData.returnDate === new Date().toISOString().split("T")[0];
+
+                            let startHour = 0;
+                            if (isSameDay) {
+                              startHour = pickupHour + 1;
+                            } else if (isToday) {
+                              startHour = getCurrentHour();
+                            }
+
+                            const timeOptions = generateTimeOptions(startHour, 23);
+
+                            return timeOptions.map((option, index) => (
+                              <option key={`return-${index}`} value={option.value}>
+                                {option.label}
+                              </option>
+                            ));
+                          })()}
+                        </select>
                       </div>
                     </div>
+
+                    {/* Location Section */}
+                    <div className="location_section">
+                      <div className="location_input">
+                        <div className="location_label">PICK-UP LOCATION <span className="required-star">*</span></div>
+                        <select
+                          name="pickupLocation"
+                          className="location_dropdown"
+                          value={bookingData.pickupLocation}
+                          onChange={handleInputChange}
+                          required
+                        >
+                          <option value="">Select pick-up location</option>
+                          {locations.length === 0 ? (
+                            <option value="" disabled>No locations available</option>
+                          ) : (
+                            locations.map(location => (
+                              <option key={`pickup-${location.id}`} value={location.name}>
+                                {location.name} ({location.region_name})
+                              </option>
+                            ))
+                          )}
+                        </select>
+                      </div>
+
+                      <div className="location_input">
+                        <div className="location_label">RETURN LOCATION</div>
+                        <select
+                          name="returnLocation"
+                          className="location_dropdown"
+                          value={bookingData.returnLocation}
+                          onChange={handleInputChange}
+                        >
+                          <option value="">Same as pick-up location</option>
+                          {locations.length === 0 ? (
+                            <option value="" disabled>No locations available</option>
+                          ) : (
+                            locations.map(location => (
+                              <option key={`return-${location.id}`} value={location.name}>
+                                {location.name} ({location.region_name})
+                              </option>
+                            ))
+                          )}
+                        </select>
+                      </div>
+                    </div>
+
+                    {/* CDW Option */}
+                    {vehicleDetails?.pricing?.cdw > 0 && (
+                      <div className="cdw-section">
+                        <div className="cdw-option">
+                          <label className="cdw-checkbox">
+                            <input
+                              type="checkbox"
+                              checked={includeCDW}
+                              onChange={(e) => setIncludeCDW(e.target.checked)}
+                            />
+                            <span>Collision Damage Waiver (CDW)</span>
+                          </label>
+                          <div className="cdw-price">
+                            + RM{parseFloat(vehicleDetails?.pricing?.cdw || 0).toFixed(2)} per day
+                          </div>
+                        </div>
+                      </div>
+                    )}
+
+                    {/* Driver Option */}
+                    <div className="driver-section">
+                      <div className="driver-option">
+                        <label className="driver-checkbox">
+                          <input
+                            type="checkbox"
+                            checked={includeDriver}
+                            onChange={(e) => setIncludeDriver(e.target.checked)}
+                          />
+                          <span className="driver-label">Driver</span>
+                        </label>
+                        <div className="driver-checkbox-content">
+                          <div className="cdw-price">
+                            + RM0.00
+                          </div>
+                        </div>
+                      </div>
+                    </div>
+
+                    {/* Extras Section */}
                     <div className="extras-section-card">
                       <div className="extras-title-card">
                         <h4>Extra Services (Optional)</h4>
                       </div>
-
                       <div className="extras-selection-card">
                         <div className="extras-buttons-container">
                           <button
@@ -1205,7 +1233,6 @@ const VehicleDetails = () => {
                             <span>Baby Seat</span>
                             <span className="extra-button-price">+ RM10.00</span>
                           </button>
-
                           <button
                             className={`extra-button ${selectedExtras.some(e => e.name === 'Baby Stroller') ? 'selected' : ''}`}
                             onClick={() => {
@@ -1216,7 +1243,6 @@ const VehicleDetails = () => {
                             <span>Baby Stroller</span>
                             <span className="extra-button-price">+ RM10.00</span>
                           </button>
-
                           <button
                             className={`extra-button ${selectedExtras.some(e => e.name === 'GPS') ? 'selected' : ''}`}
                             onClick={() => {
@@ -1230,347 +1256,140 @@ const VehicleDetails = () => {
                         </div>
                       </div>
                     </div>
-                    {/* <div className="extras-section-card">
-                      <div className="extras-title-card">
-                        <h4>Extra Services (Optional)</h4>
+
+                    {/* Additional Requests */}
+                    <div className="additional-requests-section">
+                      <div className="form-group-compact">
+                        <label>Additional Requests (Optional)</label>
+                        <textarea
+                          name="additionalRequests"
+                          value={bookingForm.additionalRequests}
+                          onChange={handleFormChange}
+                          placeholder="Any special requests or instructions"
+                          rows="2"
+                          className="compact-textarea"
+                        />
                       </div>
+                    </div>
 
-                      <div className="extras-selection-card">
-                        {isLoadingExtras ? (
-                          <div className="loading-extras-card">Loading extras...</div>
-                        ) : extras.length > 0 ? (
-                          <div className="extras-grid-card">
-                            {extras.map(extra => {
-                              const isSelected = selectedExtras.some(e => e.id === extra.id);
-                              const priceNumber = parseFloat(extra.price) || 0;
-
-                              return (
-                                <div
-                                  key={extra.id}
-                                  className={`extra-item-card ${isSelected ? 'selected' : ''}`}
-                                  onClick={() => handleExtraSelection(extra.id, priceNumber, extra.name)}
-                                >
-                                  <input
-                                    type="checkbox"
-                                    id={`extra-card-${extra.id}`}
-                                    checked={isSelected}
-                                    onChange={() => { }}
-                                    style={{ display: 'none' }}
-                                  />
-                                  <label htmlFor={`extra-card-${extra.id}`}>
-                                    <div className="extra-checkbox-card">
-                                      {isSelected ? '✓' : ''}
-                                    </div>
-                                    <div className="extra-content-card">
-                                      <div className="extra-name-card">{extra.name}</div>
-                                      <div className="extra-price-card">+ RM{priceNumber.toFixed(2)}</div>
-                                    </div>
-                                  </label>
-                                </div>
-                              );
-                            })}
-                          </div>
-                        ) : (
-                          <div className="no-extras-card">No extra services available</div>
-                        )}
-
-                        {selectedExtras.length > 0 && (
-                          <div className="selected-extras-card">
-                            <div className="selected-extras-count">
-                              Selected: {selectedExtras.length} extra{selectedExtras.length !== 1 ? 's' : ''}
-                            </div>
-                            <div className="selected-extras-total">
-                              + RM{selectedExtras.reduce((sum, e) => sum + (parseFloat(e.price) || 0), 0).toFixed(2)}
-                            </div>
-                          </div>
-                        )}
-                      </div>
-                    </div> */}
-
+                    {/* Price Summary */}
                     <div className="price_details">
-                      {totalDays > 0 && (
-                        <>
-                          <div className="price_item">
-                            <div>
-                              {getRateDescription()}
-                              <span className="days-count"> × {totalDays} day{totalDays > 1 ? 's' : ''}</span>
-                            </div>
-                            <div>RM {totalBasePrice.toFixed(2)}</div>
-                          </div>
-
-                          {weekendSurcharge > 0 && (
-                            <div className="price_item discount">
-                              <div>Weekend Surcharge (20%)</div>
-                              <div>RM {weekendSurcharge.toFixed(2)}</div>
-                            </div>
-                          )}
-
-                          {selectedExtras.length > 0 && (
-                            <>
-                              <div className="price_item extras-title">
-                                <div>Extra Services:</div>
-                                <div></div>
+                      {bookingData.pickupDate && bookingData.returnDate ? (
+                        totalBasePrice > 0 ? (
+                          <>
+                            <div className="price_item">
+                              <div>
+                                {bookingData.pickupDate === bookingData.returnDate ? 'Hourly Rate' : 'Daily Rate'}
+                                <span className="days-count">
+                                  {bookingData.pickupDate === bookingData.returnDate
+                                    ? ` × ${totalHours} hour${totalHours > 1 ? 's' : ''}`
+                                    : ` × ${totalDays} day${totalDays > 1 ? 's' : ''}`
+                                  }
+                                </span>
                               </div>
-                              {selectedExtras.map(extra => (
-                                <div key={extra.id} className="price_item extra-item-row">
-                                  <div>• {extra.name}</div>
-                                  <div>RM {extra.price.toFixed(2)}</div>
+                              <div>RM {totalBasePrice.toFixed(2)}</div>
+                            </div>
+
+                            {includeCDW && vehicleDetails?.pricing?.cdw > 0 && (
+                              <div className="price_item">
+                                <div>Collision Damage Waiver (CDW)</div>
+                                <div>RM {(parseFloat(vehicleDetails?.pricing?.cdw || 0) * (bookingData.pickupDate === bookingData.returnDate ? Math.max(1, Math.ceil(totalHours / 24)) : totalDays)).toFixed(2)}</div>
+                              </div>
+                            )}
+                            {includeDriver && (
+                              <div className="price_item free-item">
+                                <div>Driver</div>
+                                <div>RM 0.00</div>
+                              </div>
+                            )}
+                            {weekendSurcharge > 0 && (
+                              <div className="price_item discount">
+                                <div>Weekend Surcharge (20%)</div>
+                                <div>RM {weekendSurcharge.toFixed(2)}</div>
+                              </div>
+                            )}
+
+                            {selectedExtras.length > 0 && (
+                              <>
+                                <div className="price_item extras-title">
+                                  <div>Extra Services:</div>
+                                  <div></div>
                                 </div>
-                              ))}
-                            </>
-                          )}
+                                {selectedExtras.map(extra => (
+                                  <div key={extra.id} className="price_item extra-item-row">
+                                    <div>• {extra.name}</div>
+                                    <div>RM {extra.price.toFixed(2)}</div>
+                                  </div>
+                                ))}
+                              </>
+                            )}
+                            <div className="price_item tax">
+                              <div>Service Tax (8% SST)</div>
+                              <div>RM {((totalBasePrice + weekendSurcharge + selectedExtras.reduce((sum, e) => sum + e.price, 0) +
+                                (includeCDW ? (vehicleDetails?.pricing?.cdw || 0) * (bookingData.pickupDate === bookingData.returnDate ? Math.max(1, Math.ceil(totalHours / 24)) : totalDays) : 0)) * 0.08).toFixed(2)}</div>
+                            </div>
 
-                          <div className="price_item tax">
-                            <div>Service Tax (8% SST)</div>
-                            <div>RM {((totalBasePrice + weekendSurcharge + selectedExtras.reduce((sum, e) => sum + e.price, 0)) * 0.08).toFixed(2)}</div>
+                            <div className="price_total">
+                              <div><strong>Total (MYR)</strong></div>
+                              <div><strong>RM {totalPrice.toFixed(2)}</strong></div>
+                            </div>
+                          </>
+                        ) : (
+                          <div className="no-price-message">
+                            Please select valid dates and times
                           </div>
-
-                          <div className="price_total">
-                            <div><strong>Total (MYR)</strong></div>
-                            <div><strong>RM {totalPrice.toFixed(2)}</strong></div>
-                          </div>
-                        </>
+                        )
+                      ) : (
+                        <div className="no-price-message">
+                          Select dates to see price calculation
+                        </div>
                       )}
                     </div>
 
-                    <button
-                      className="reserve_button"
-                      onClick={() => {
-                        if (!bookingData.pickupDate || !bookingData.returnDate) {
-                          displayToast('error', 'Please select pickup and return dates first');
-                          return;
-                        }
-                        setShowBookingForm(true);
-                      }}
-                      disabled={!bookingData.pickupDate || !bookingData.returnDate}
-                    >
-                      {!bookingData.pickupDate || !bookingData.returnDate ? 'Select Dates First' : 'Book Now'}
-                    </button>
+                    {/* Action Buttons */}
+                    <div className="booking-actions">
+                      <button
+                        className="add-to-cart-button"
+                        onClick={addToCart}
+                        disabled={!validateBookingForm()}
+                      >
+                        <span className="cart-icon">🛒</span>
+                        Add to Cart
+                      </button>
+                    </div>
+
+                    {/* Terms & Conditions */}
+                    <div className="terms-section">
+                      <label className="terms-checkbox">
+                        <input
+                          type="checkbox"
+                          checked={acceptTerms}
+                          onChange={(e) => setAcceptTerms(e.target.checked)}
+                          required
+                        />
+                        <span>
+                          I confirm that I have read, understood and agree with the <a href="/" target="_blank">Rental Terms</a> provided.
+                        </span>
+                      </label>
+                    </div>
                   </div>
                 </div>
               </div>
             </div>
 
-            {/* Booking Form Modal */}
-            {showBookingForm && (
-              <div className="booking-overlay">
-                <div className="booking-modal vehicle-booking-modal">
-                  <div className="booking-header">
-                    <button className="back-button" onClick={() => setShowBookingForm(false)}>
-                      <IoReturnUpBackOutline /> <span>Complete Your Booking</span>
-                    </button>
-                  </div>
-
-                  <div className="booking-content">
-                    <div className="booking-left">
-                      <div className="driver-details-section">
-                        <h2>Driver Information</h2>
-                        <div className="form-grid">
-                          <div className="form-group title-group">
-                            <label>Title *</label>
-                            <div className="title-options">
-                              {['Mr.', 'Mrs.', 'Ms.', 'Dr.'].map(title => (
-                                <label className="radio-label" key={title}>
-                                  <input
-                                    type="radio"
-                                    name="title"
-                                    value={title}
-                                    checked={bookingForm.title === title}
-                                    onChange={handleFormChange}
-                                    required
-                                  />
-                                  <span>{title}</span>
-                                </label>
-                              ))}
-                            </div>
-                          </div>
-
-                          <div className="form-group">
-                            <label>First Name *</label>
-                            <input
-                              type="text"
-                              name="firstName"
-                              value={bookingForm.firstName}
-                              onChange={handleFormChange}
-                              placeholder="Enter your first name"
-                              required
-                            />
-                          </div>
-
-                          <div className="form-group">
-                            <label>Last Name *</label>
-                            <input
-                              type="text"
-                              name="lastName"
-                              value={bookingForm.lastName}
-                              onChange={handleFormChange}
-                              placeholder="Enter your last name"
-                              required
-                            />
-                          </div>
-
-                          <div className="form-group">
-                            <label>Email Address *</label>
-                            <input
-                              type="email"
-                              name="email"
-                              value={bookingForm.email}
-                              onChange={handleFormChange}
-                              placeholder="Enter your email address"
-                              required
-                            />
-                          </div>
-
-                          <div className="form-group">
-                            <label>Phone Number *</label>
-                            <input
-                              type="tel"
-                              name="phoneNumber"
-                              value={bookingForm.phoneNumber}
-                              onChange={handleFormChange}
-                              placeholder="Enter your phone number"
-                              required
-                            />
-                          </div>
-
-                          <div className="form-group">
-                            <label>Driving License Number *</label>
-                            <input
-                              type="text"
-                              name="drivingLicense"
-                              value={bookingForm.drivingLicense}
-                              onChange={handleFormChange}
-                              placeholder="Enter your driving license number"
-                              required
-                            />
-                          </div>
-
-                          <div className="form-group full-width">
-                            <label>Additional Requests (Optional)</label>
-                            <textarea
-                              name="additionalRequests"
-                              value={bookingForm.additionalRequests}
-                              onChange={handleFormChange}
-                              placeholder="Any special requests or instructions"
-                              rows="3"
-                            />
-                          </div>
-                        </div>
-                      </div>
-                      <div className="cart-actions">
-                        <button
-                          className="add-to-cart-btn"
-                          onClick={addToCart}
-                          disabled={!validateBookingForm()}
-                        >
-                          <span className="cart-icon">🛒</span>
-                          Add to Cart & Pay Later
-                        </button>
-
-                        <p className="cart-benefits">
-                          ✓ Reserve for 24 hours<br />
-                          ✓ No payment required now<br />
-                          ✓ Add multiple vehicles<br />
-                          ✓ Complete checkout anytime
-                        </p>
-                      </div>
-                    </div>
-
-                    <div className="booking-right">
-                      <div className="vehicle-card">
-                        <img
-                          src={vehiclePhotos[0] || DefaultCar}
-                          alt={vehicleDetails?.vehicle}
-                        />
-                        <div className="vehicle-info">
-                          <h3>{vehicleDetails?.vehicle}</h3>
-                          <div className="vehicle-specs">
-                            <span><MdAirlineSeatReclineNormal /> {vehicleDetails?.seat || 5} seats</span>
-                            <span><GiGearStickPattern /> {vehicleDetails?.transmission_name}</span>
-                          </div>
-                        </div>
-                      </div>
-
-                      {totalDays > 0 && (
-                        <div className="price-details">
-                          <h3>Booking Summary</h3>
-                          <div className="price-breakdown">
-                            <div className="price-row">
-                              <span>{bookingData.rateType === 'weekly' && totalDays >= 7 ? 'Weekly Rate (10% off)' :
-                                bookingData.rateType === 'monthly' && totalDays >= 30 ? 'Monthly Rate (20% off)' :
-                                  'Daily Rate'} × {totalDays} days</span>
-                              <span>RM {totalBasePrice.toFixed(2)}</span>
-                            </div>
-                            {weekendSurcharge > 0 && (
-                              <div className="price-row discount">
-                                <span>Weekend Surcharge (20%)</span>
-                                <span>RM {weekendSurcharge.toFixed(2)}</span>
-                              </div>
-                            )}
-                            {selectedExtras.length > 0 && (
-                              <>
-                                <div className="price-row extras-title">
-                                  <span>Extra Services:</span>
-                                  <span></span>
-                                </div>
-                                {selectedExtras.map(extra => (
-                                  <div key={extra.id} className="price-row extra-item-row">
-                                    <span>• {extra.name}</span>
-                                    <span>RM {extra.price.toFixed(2)}</span>
-                                  </div>
-                                ))}
-                                <div className="price-row extras-total">
-                                  <span>Extras Total</span>
-                                  <span>RM {selectedExtras.reduce((sum, e) => sum + e.price, 0).toFixed(2)}</span>
-                                </div>
-                              </>
-                            )}
-                            <div className="price-row tax">
-                              <span>Service Tax (8% SST)</span>
-                              <span>RM {((totalBasePrice + weekendSurcharge + selectedExtras.reduce((sum, e) => sum + e.price, 0)) * 0.08).toFixed(2)}</span>
-                            </div>
-                            <div className="price-total">
-                              <span>Total (MYR)</span>
-                              <span>RM {totalPrice.toFixed(2)}</span>
-                            </div>
-                          </div>
-
-                          <div className="booking-dates">
-                            <h4>Rental Period</h4>
-                            <div className="date-item">
-                              <FaCalendarAlt />
-                              <div>
-                                <strong>Pickup:</strong> {bookingData.pickupDate} at {bookingData.pickupTime}
-                              </div>
-                            </div>
-                            <div className="date-item">
-                              <FaCalendarAlt />
-                              <div>
-                                <strong>Return:</strong> {bookingData.returnDate} at {bookingData.returnTime}
-                              </div>
-                            </div>
-                            <div className="date-item">
-                              <FaClock />
-                              <div>
-                                <strong>Duration:</strong> {totalDays} day{totalDays > 1 ? 's' : ''}
-                              </div>
-                            </div>
-                          </div>
-                        </div>
-                      )}
-                    </div>
-                  </div>
-                </div>
-              </div>
-            )}
             {/* Mobile Booking Bar */}
             <div className="mobile-booking-bar">
               <div className="mobile-booking-bar-content">
                 <div className="mobile-price-info">
-                  <h3>RM{parseFloat(vehicleDetails?.pricing?.daily || vehicleDetails?.daily || 0).toFixed(2)} <span>/day</span>
-                  </h3>
-                  {totalDays > 0 && (
-                    <span>Total: RM{totalPrice.toFixed(2)} for {totalDays} day{totalDays > 1 ? 's' : ''}</span>
+                  <h3>RM{parseFloat(vehicleDetails?.pricing?.daily || vehicleDetails?.daily || 0).toFixed(2)} <span>/day</span></h3>
+                  {totalBasePrice > 0 && (
+                    <span>
+                      Total: RM{totalPrice.toFixed(2)} for{' '}
+                      {bookingData.pickupDate === bookingData.returnDate
+                        ? `${totalHours} hour${totalHours > 1 ? 's' : ''}`
+                        : `${totalDays} day${totalDays > 1 ? 's' : ''}`
+                      }
+                    </span>
                   )}
                 </div>
                 <button className="mobile-book-now-btn" onClick={() => {
@@ -1584,125 +1403,6 @@ const VehicleDetails = () => {
                 </button>
               </div>
             </div>
-
-            {/* Features Overlay Modal */}
-            {showFeaturesOverlay && (
-              <div className="features-overlay">
-                <div className="features-modal">
-                  <div className="features-header">
-                    <h2>Vehicle Features & Specifications</h2>
-                    <button
-                      className="close-features-btn"
-                      onClick={() => setShowFeaturesOverlay(false)}
-                    >
-                      <IoIosClose />
-                    </button>
-                  </div>
-                  <div className="features-content">
-                    <div className="features-section">
-                      <h3><FaCar /> Basic Information</h3>
-                      <div className="features-grid">
-                        <div className="feature-card">
-                          <div className="feature-icon">
-                            <FaCar />
-                          </div>
-                          <div className="feature-details">
-                            <h4>Vehicle Model</h4>
-                            <p>{vehicleDetails?.vehicle || 'Not specified'}</p>
-                          </div>
-                        </div>
-                        <div className="feature-card">
-                          <div className="feature-icon">
-                            <FaCar />
-                          </div>
-                          <div className="feature-details">
-                            <h4>Brand</h4>
-                            <p>{vehicleDetails?.brand_name || vehicleDetails?.brand || 'Brand'}</p>
-                          </div>
-                        </div>
-                        <div className="feature-card">
-                          <div className="feature-icon">
-                            <MdAirlineSeatReclineNormal />
-                          </div>
-                          <div className="feature-details">
-                            <h4>Seating Capacity</h4>
-                            <p>{vehicleDetails?.seat || 5} persons</p>
-                          </div>
-                        </div>
-                        <div className="feature-card">
-                          <div className="feature-icon">
-                            <GiGearStickPattern />
-                          </div>
-                          <div className="feature-details">
-                            <h4>Transmission</h4>
-                            <p>{vehicleDetails?.transmission_name || 'Automatic/Manual'}</p>
-                          </div>
-                        </div>
-                      </div>
-                    </div>
-
-                    <div className="features-section">
-                      <h3><FaGasPump /> Fuel & Performance</h3>
-                      <div className="features-grid">
-                        <div className="feature-card">
-                          <div className="feature-icon">
-                            <FaGasPump />
-                          </div>
-                          <div className="feature-details">
-                            <h4>Fuel Type</h4>
-                            <p>Petrol</p>
-                          </div>
-                        </div>
-                        <div className="feature-card">
-                          <div className="feature-icon">
-                            <FaCogs />
-                          </div>
-                          <div className="feature-details">
-                            <h4>Engine Capacity</h4>
-                            <p>1.5L</p>
-                          </div>
-                        </div>
-                        <div className="feature-card">
-                          <div className="feature-icon">
-                            <MdOutlineDirectionsCar />
-                          </div>
-                          <div className="feature-details">
-                            <h4>Mileage</h4>
-                            <p>Unlimited (Free mileage)</p>
-                          </div>
-                        </div>
-                        <div className="feature-card">
-                          <div className="feature-icon">
-                            <FaShieldAlt />
-                          </div>
-                          <div className="feature-details">
-                            <h4>Safety Features</h4>
-                            <p>ABS, Airbags, Seat Belts</p>
-                          </div>
-                        </div>
-                      </div>
-                    </div>
-
-                    <div className="features-section">
-                      <h3><FaCheckCircle /> Included Features</h3>
-                      <div className="included-features">
-                        <ul>
-                          <li><FaCheckCircle className="check-icon" /> Free unlimited mileage</li>
-                          <li><FaCheckCircle className="check-icon" /> Comprehensive insurance</li>
-                          <li><FaCheckCircle className="check-icon" /> 24/7 roadside assistance</li>
-                          <li><FaCheckCircle className="check-icon" /> Vehicle registration & road tax</li>
-                          <li><FaCheckCircle className="check-icon" /> Standard maintenance</li>
-                          <li><FaCheckCircle className="check-icon" /> Theft protection</li>
-                          <li><FaCheckCircle className="check-icon" /> Third party liability</li>
-                          <li><FaCheckCircle className="check-icon" /> Airport delivery (optional)</li>
-                        </ul>
-                      </div>
-                    </div>
-
-                  </div>
-                </div>
-              </div>
-            )}
 
             {showToast && <Toast type={toastType} message={toastMessage} />}
           </div>

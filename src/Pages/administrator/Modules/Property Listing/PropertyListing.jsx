@@ -1,9 +1,17 @@
 import React, { useState, useEffect } from 'react';
-import { fetchPropertiesListingTable, updatePropertyStatus, deleteProperty, propertyListingAccept, propertyListingReject, fetchReservation } from '../../../../../Api/api';
+import { 
+    fetchVehicles, 
+    updateVehicleStatus, 
+    deleteVehicle, 
+    createVehicle,
+    updateVehicle,
+    fetchBrands,
+    fetchCategories,
+    fetchRegions
+} from '../../../../../Api/api';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import ActionDropdown from '../../../../Component/ActionDropdown/ActionDropdown';
 import Modal from '../../../../Component/Modal/Modal';
-import PropertyForm from '../../../../Component/PropertyForm/PropertyForm';
 import SearchBar from '../../../../Component/SearchBar/SearchBar';
 import Filter from '../../../../Component/Filter/Filter';
 import PaginatedTable from '../../../../Component/PaginatedTable/PaginatedTable';
@@ -11,43 +19,76 @@ import Toast from '../../../../Component/Toast/Toast';
 import Alert from '../../../../Component/Alert/Alert';
 import Loader from '../../../../Component/Loader/Loader';
 import Status from '../../../../Component/Status/Status';
-import { FaEye, FaEdit, FaTrash, FaCheck, FaTimes } from 'react-icons/fa';
+import VehicleForm from '../../../../Component/VehicleForm/VehicleForm'; // Create this component
+import { FaEye, FaEdit, FaTrash, FaCheck, FaTimes, FaPlus } from 'react-icons/fa';
 import '../../../../Component/MainContent/MainContent.css';
 import '../Property Listing/PropertyListing.css';
-
 
 const PropertyListing = () => {
     const [searchKey, setSearchKey] = useState('');
     const [selectedStatus, setSelectedStatus] = useState('All');
-    const [appliedFilters, setAppliedFilters] = useState({ status: 'All' });
-    const [selectedProperty, setSelectedProperty] = useState(null);
-    const [editProperty, setEditProperty] = useState(null);
-    const [isPropertyFormOpen, setIsPropertyFormOpen] = useState(false);
+    const [selectedBrand, setSelectedBrand] = useState('All');
+    const [selectedCategory, setSelectedCategory] = useState('All');
+    const [selectedRegion, setSelectedRegion] = useState('All');
+    const [appliedFilters, setAppliedFilters] = useState({ 
+        status: 'All', 
+        brand: 'All',
+        category: 'All',
+        region: 'All'
+    });
+    const [selectedVehicle, setSelectedVehicle] = useState(null);
+    const [isVehicleFormOpen, setIsVehicleFormOpen] = useState(false);
+    const [editingVehicle, setEditingVehicle] = useState(null);
     const [toastMessage, setToastMessage] = useState('');
     const [showToast, setShowToast] = useState(false);
     const [toastType, setToastType] = useState('');
     const [isDialogOpen, setIsDialogOpen] = useState(false);
-    const [propertyToDelete, setPropertyToDelete] = useState(null);
+    const [vehicleToDelete, setVehicleToDelete] = useState(null);
     const [page, setPage] = useState(1);
     const [pageSize, setPageSize] = useState(10);
     
     const queryClient = useQueryClient();
     
-    // Use React Query to fetch properties
+    // Use React Query to fetch vehicles
     const { data, isLoading, error } = useQuery({
-        queryKey: ['properties'],
-        queryFn: () => fetchPropertiesListingTable(),
+        queryKey: ['vehicles'],
+        queryFn: () => fetchVehicles(),
         select: (data) => ({
-            properties: (data?.properties || []).filter(property => property.propertyid !== undefined),
-            totalCount: data?.totalCount || 0
+            vehicles: data?.data || [],
+            totalCount: data?.count || 0,
+            brands: [...new Set(data?.data?.map(v => v.brand_name).filter(Boolean))],
+            categories: [...new Set(data?.data?.map(v => v.category_name).filter(Boolean))],
+            regions: [...new Set(data?.data?.map(v => v.region_name).filter(Boolean))]
         }),
         staleTime: 30 * 60 * 1000,
-        refetchInterval: 1000,  
+        refetchInterval: 10000,
+    });
+
+    // Fetch brands, categories, and regions for the form
+    const { data: brandsData } = useQuery({
+        queryKey: ['brands'],
+        queryFn: () => fetchBrands(),
+        select: (data) => data?.data || [],
+    });
+
+    const { data: categoriesData } = useQuery({
+        queryKey: ['categories'],
+        queryFn: () => fetchCategories(),
+        select: (data) => data?.data || [],
+    });
+
+    const { data: regionsData } = useQuery({
+        queryKey: ['regions'],
+        queryFn: () => fetchRegions(),
+        select: (data) => data?.data || [],
     });
     
-    // Extract properties from query result
-    const properties = data?.properties || [];
+    // Extract data from query result
+    const vehicles = data?.vehicles || [];
     const totalCount = data?.totalCount || 0;
+    const brands = brandsData || [];
+    const categories = categoriesData || [];
+    const regions = regionsData || [];
 
     const displayToast = (type, message) => {
         setToastType(type);
@@ -56,94 +97,101 @@ const PropertyListing = () => {
         setTimeout(() => setShowToast(false), 5000);
     };
 
-    // React Query mutation for accepting property (enabling)
-    const acceptMutation = useMutation({
-        mutationFn: async (propertyId) => {
-            await propertyListingAccept(propertyId);
-            return updatePropertyStatus(propertyId, 'Available');
-        },
-        onSuccess: (_, propertyId) => {
-            queryClient.invalidateQueries({ queryKey: ['properties'] });
-        },
-        onError: (error) => {
-            console.error('Failed to accept property', error);
-        }
-    });
-
-    // React Query mutation for rejecting property (disabling)
-    const rejectMutation = useMutation({
-        mutationFn: async (propertyId) => {
-            await propertyListingReject(propertyId);
-            return updatePropertyStatus(propertyId, 'Unavailable');
-        },
-        onSuccess: (_, propertyId) => {
-            queryClient.invalidateQueries({ queryKey: ['properties'] });
-        },
-        onError: (error) => {
-            console.error('Failed to reject property', error);
-        }
-    });
-
-    // React Query mutation for deleting property
-    const deleteMutation = useMutation({
-        mutationFn: async (propertyId) => {
-            return deleteProperty(propertyId);
+    // React Query mutation for creating vehicle
+    const createVehicleMutation = useMutation({
+        mutationFn: async (vehicleData) => {
+            return createVehicle(vehicleData);
         },
         onSuccess: () => {
-            displayToast('success', 'Property deleted successfully');
-            queryClient.invalidateQueries({ queryKey: ['properties'] });
+            queryClient.invalidateQueries({ queryKey: ['vehicles'] });
+            displayToast('success', 'Vehicle created successfully');
+            setIsVehicleFormOpen(false);
+            setEditingVehicle(null);
         },
         onError: (error) => {
-            console.error('Failed to delete property', error);
+            console.error('Failed to create vehicle', error);
+            displayToast('error', 'Failed to create vehicle');
+        }
+    });
+
+    // React Query mutation for updating vehicle
+    const updateVehicleMutation = useMutation({
+        mutationFn: async ({ id, vehicleData }) => {
+            return updateVehicle(id, vehicleData);
+        },
+        onSuccess: () => {
+            queryClient.invalidateQueries({ queryKey: ['vehicles'] });
+            displayToast('success', 'Vehicle updated successfully');
+            setIsVehicleFormOpen(false);
+            setEditingVehicle(null);
+        },
+        onError: (error) => {
+            console.error('Failed to update vehicle', error);
+            displayToast('error', 'Failed to update vehicle');
+        }
+    });
+  
+    // React Query mutation for deleting vehicle
+    const deleteMutation = useMutation({
+        mutationFn: async (vehicleId) => {
+            return deleteVehicle(vehicleId);
+        },
+        onSuccess: () => {
+            displayToast('success', 'Vehicle deleted successfully');
+            queryClient.invalidateQueries({ queryKey: ['vehicles'] });
+        },
+        onError: (error) => {
+            console.error('Failed to delete vehicle', error);
+            displayToast('error', 'Failed to delete vehicle');
         },
         onSettled: () => {
             setIsDialogOpen(false);
-            setPropertyToDelete(null);
+            setVehicleToDelete(null);
         }
     });
 
-    const handleAction = async (action, property) => {
+    const handleAction = async (action, vehicle) => {
         try {
             if (action === 'view') {
-                setSelectedProperty({
-                    propertyid: property.propertyid || 'N/A',
-                    propertyname: property.propertyaddress || 'N/A',
-                    clustername: property.clustername || 'N/A',
-                    categoryname: property.categoryname || 'N/A',
-                    propertyprice: property.normalrate || 'N/A',
-                    propertylocation: property.nearbylocation || 'N/A',
-                    propertyguestpaxno: property.propertyguestpaxno || 'N/A',
-                    propertystatus: property.propertystatus || 'N/A',
-                    propertybedtype: property.propertybedtype || 'N/A',
-                    propertydescription: property.propertydescription || 'N/A',
-                    images: property.propertyimage || [],
-                    username: property.username || 'N/A',
+                setSelectedVehicle({
+                    id: vehicle.id || 'N/A',
+                    brand_name: vehicle.brand_name || 'N/A',
+                    category_name: vehicle.category_name || 'N/A',
+                    region_name: vehicle.region_name || 'N/A',
+                    photo: vehicle.photo || 'N/A',
+                    vehicle: vehicle.vehicle || 'N/A',
+                    seat: vehicle.seat || 'N/A',
+                    transmission_name: vehicle.transmission_name || 'N/A',
+                    pricing: vehicle.pricing || {},
+                    hourly: vehicle.pricing?.hourly || 0,
+                    daily: vehicle.pricing?.daily || 0,
+                    weekly: vehicle.pricing?.weekly || 0,
+                    monthly: vehicle.pricing?.monthly || 0,
+                    cdw: vehicle.pricing?.cdw || 0,
+                    status: vehicle.status === 1 ? 'Available' : 'Unavailable',
+                    position: vehicle.position || 0,
+                    seo_keyword: vehicle.seo_keyword || 'N/A',
+                    seo_description: vehicle.seo_description || 'N/A',
+                    created: vehicle.created || 'N/A',
+                    modified: vehicle.modified || 'N/A'
                 });
             } else if (action === 'edit') {
-                if (property.propertystatus === 'Available') {
-                    displayToast('error', 'You need to disable the property first before editing.');
+                if (vehicle.status === 1) {
+                    displayToast('error', 'You need to disable the vehicle first before editing.');
                     return;
                 }
-                setEditProperty({ ...property });
-                setIsPropertyFormOpen(true);
-            } else if (action === 'accept') {
-                await acceptMutation.mutateAsync(property.propertyid);
-                displayToast('success', 'Property Accepted Successfully');
-            } else if (action === 'reject') {
-                await rejectMutation.mutateAsync(property.propertyid);
-                displayToast('success', 'Property Rejected Successfully');
-            } else if (action === 'enable') {
-                await acceptMutation.mutateAsync(property.propertyid);
-                displayToast('success', 'Property Enabled Successfully');
-            } else if (action === 'disable') {
-                await rejectMutation.mutateAsync(property.propertyid);
-                displayToast('success', 'Property Disabled Successfully');
+                setEditingVehicle(vehicle);
+                setIsVehicleFormOpen(true);
+            } else if (action === 'accept' || action === 'enable') {
+                await acceptMutation.mutateAsync(vehicle.id);
+            } else if (action === 'reject' || action === 'disable') {
+                await rejectMutation.mutateAsync(vehicle.id);
             } else if (action === 'delete') {
-                if (property.propertystatus === 'Unavailable' && property.username === username) {
-                    setPropertyToDelete(property.propertyid);
+                if (vehicle.status !== 1) {
+                    setVehicleToDelete(vehicle.id);
                     setIsDialogOpen(true);
                 } else {
-                    displayToast('error', 'You do not have permission to delete this property.');
+                    displayToast('error', 'You cannot delete an active vehicle. Disable it first.');
                 }
             } 
         } catch (error) {
@@ -151,51 +199,68 @@ const PropertyListing = () => {
             displayToast('error', 'An error occurred while processing your request.');
         }
     };
-    
-    const handleDeleteProperty = async () => {
+
+    // Handle form submission for creating/updating vehicle
+    const handleVehicleSubmit = async (formData) => {
         try {
-            const property = properties.find((prop) => prop.propertyid === propertyToDelete);
+            if (editingVehicle) {
+                // Update existing vehicle
+                await updateVehicleMutation.mutateAsync({
+                    id: editingVehicle.id,
+                    vehicleData: formData
+                });
+            } else {
+                // Create new vehicle
+                await createVehicleMutation.mutateAsync(formData);
+            }
+        } catch (error) {
+            console.error('Error saving vehicle:', error);
+        }
+    };
+    
+    const handleDeleteVehicle = async () => {
+        try {
+            const vehicle = vehicles.find((v) => v.id === vehicleToDelete);
 
-            if (!property) {
-                displayToast('error', 'Property not found. Please refresh the page and try again.');
+            if (!vehicle) {
+                displayToast('error', 'Vehicle not found. Please refresh the page and try again.');
                 setIsDialogOpen(false);
-                setPropertyToDelete(null);
+                setVehicleToDelete(null);
                 return;
             }
 
-            if (property.propertystatus !== 'Unavailable') {
-                displayToast('error', 'Only unavailable properties can be deleted.');
+            if (vehicle.status === 1) {
+                displayToast('error', 'Only unavailable vehicles can be deleted.');
                 setIsDialogOpen(false);
-                setPropertyToDelete(null);
+                setVehicleToDelete(null);
                 return;
             }
-
-            // Use React Query to fetch reservations
-            const reservationsQuery = await queryClient.fetchQuery({
-                queryKey: ['reservations', propertyToDelete],
-                queryFn: fetchReservation
-            });
             
-            const hasReservation = reservationsQuery.some(reservation => reservation.propertyid === propertyToDelete);
+            const hasReservation = reservationsQuery.some(reservation => reservation.vehicle_id === vehicleToDelete);
 
             if (hasReservation) {
-                displayToast('error', 'This property has an existing reservation and cannot be deleted.');
+                displayToast('error', 'This vehicle has an existing reservation and cannot be deleted.');
                 setIsDialogOpen(false);
-                setPropertyToDelete(null);
+                setVehicleToDelete(null);
                 return;
             }
 
-            deleteMutation.mutate(propertyToDelete);
+            deleteMutation.mutate(vehicleToDelete);
         } catch (error) {
-            console.error('Failed to delete property:', error);
-            displayToast('error', 'Failed to delete property. Please try again.');
+            console.error('Failed to delete vehicle:', error);
+            displayToast('error', 'Failed to delete vehicle. Please try again.');
             setIsDialogOpen(false);
-            setPropertyToDelete(null);
+            setVehicleToDelete(null);
         }
     };
 
     const handleApplyFilters = () => {
-        setAppliedFilters({ status: selectedStatus });
+        setAppliedFilters({ 
+            status: selectedStatus,
+            brand: selectedBrand,
+            category: selectedCategory,
+            region: selectedRegion
+        });
     };
 
     const filters = [
@@ -206,102 +271,101 @@ const PropertyListing = () => {
             onChange: setSelectedStatus,
             options: [
                 { value: 'All', label: 'All Statuses' },
-                { value: 'Pending', label: 'Pending' },
                 { value: 'Available', label: 'Available' },
                 { value: 'Unavailable', label: 'Unavailable' },
+            ],
+        },
+        {
+            name: 'brand',
+            label: 'Brand',
+            value: selectedBrand,
+            onChange: setSelectedBrand,
+            options: [
+                { value: 'All', label: 'All Brands' },
+                ...brands.map(brand => ({ value: brand.name, label: brand.name }))
+            ],
+        },
+        {
+            name: 'category',
+            label: 'Category',
+            value: selectedCategory,
+            onChange: setSelectedCategory,
+            options: [
+                { value: 'All', label: 'All Categories' },
+                ...categories.map(category => ({ value: category.name, label: category.name }))
+            ],
+        },
+        {
+            name: 'region',
+            label: 'Region',
+            value: selectedRegion,
+            onChange: setSelectedRegion,
+            options: [
+                { value: 'All', label: 'All Regions' },
+                ...regions.map(region => ({ value: region.name, label: region.name }))
             ],
         },
     ];
 
     const displayLabels = {
-        propertyid: "PID",
-        propertyname: "Property Name",
-        clustername: "Cluster Name",
-        categoryname: "Category Name",
-        propertyprice: "Property Price",
-        propertylocation: "Property Location",
-        propertyguestpaxno: "Guest Capacity",
-        propertystatus: "Property Status",
-        propertybedtype: "Bed Type",
-        propertydescription: "Description",
-        images: "Images",
-        username: "Operator Name"
+        id: "Vehicle ID",
+        brand_name: "Brand",
+        category_name: "Category",
+        region_name: "Region",
+        photo: "Image",
+        vehicle: "Vehicle Name",
+        seat: "Seats",
+        transmission_name: "Transmission",
+        pricing: "Pricing Information",
+        hourly: "Hourly Rate",
+        daily: "Daily Rate",
+        weekly: "Weekly Rate",
+        monthly: "Monthly Rate",
+        cdw: "CDW (Collision Damage Waiver)",
+        status: "Status",
+        position: "Display Position",
+        seo_keyword: "SEO Keywords",
+        seo_description: "SEO Description",
+        created: "Created Date",
+        modified: "Last Modified"
     };
 
-    const filteredProperties = properties.filter((property) => {
-
+    const filteredVehicles = vehicles.filter((vehicle) => {
         const statusMatch =
             appliedFilters.status === 'All' ||
-            (property.propertystatus ?? 'Pending').toLowerCase() === appliedFilters.status.toLowerCase();
+            (vehicle.status === 1 ? 'Available' : 'Unavailable') === appliedFilters.status;
 
+        const brandMatch =
+            appliedFilters.brand === 'All' ||
+            vehicle.brand_name === appliedFilters.brand;
+
+        const categoryMatch =
+            appliedFilters.category === 'All' ||
+            vehicle.category_name === appliedFilters.category;
+
+        const regionMatch =
+            appliedFilters.region === 'All' ||
+            vehicle.region_name === appliedFilters.region;
 
         const searchInFields =
-            `${property.propertyid} ${property.propertyaddress} ${property.clustername} ${property.normalrate} ${property.propertystatus}`
+            `${vehicle.id} ${vehicle.vehicle} ${vehicle.brand_name} ${vehicle.category_name} ${vehicle.region_name} ${vehicle.seat} ${vehicle.transmission_name}`
                 .toLowerCase()
                 .includes(searchKey.toLowerCase());
 
-        return statusMatch && searchInFields;
+        return statusMatch && brandMatch && categoryMatch && regionMatch && searchInFields;
     });
 
-    const propertyDropdownItems = (property, username, usergroup) => {
-    const isOwner = property.username === username; 
-    const isModerator = usergroup === 'Moderator';
-    const isAdmin = usergroup === 'Administrator';
+    const vehicleDropdownItems = (vehicle, usergroup) => {
+        const { status } = vehicle;
+        const isAdmin = usergroup === 'Administrator';
 
-    const { propertystatus } = property;
-
-    if (isModerator) {
-        // Logic for moderator
-        if (propertystatus === 'Pending') {
-            return [
-                { label: 'View Details', icon: <FaEye />, action: 'view' },
-            ];
-        } else if (propertystatus === 'Available') {
-            return [
-                { label: 'View Details', icon: <FaEye />, action: 'view' },
-                { label: 'Edit', icon: <FaEdit />, action: 'edit' },
-            ];
-        } else if (propertystatus === 'Unavailable') {
-            return [
-                { label: 'View Details', icon: <FaEye />, action: 'view' },
-                { label: 'Edit', icon: <FaEdit />, action: 'edit' },
-            ];
-        }
-    }
-
-    if (isAdmin) {
-        if (!isOwner) {
-            // Admin managing moderator's property
-            if (property.username !== username && property.username.includes('admin')) {
-                
-                return [{ label: 'View Details', icon: <FaEye />, action: 'view' }];
-            }
-            if (propertystatus === 'Pending') {
-                return [
-                    { label: 'View Details', icon: <FaEye />, action: 'view' },
-                    { label: 'Accept', icon: <FaCheck />, action: 'accept' },
-                    { label: 'Reject', icon: <FaTimes />, action: 'reject' },
-                ];
-            } else if (propertystatus === 'Available') {
+        if (isAdmin) {
+            if (status === 1) { // Available
                 return [
                     { label: 'View Details', icon: <FaEye />, action: 'view' },
                     { label: 'Disable', icon: <FaTimes />, action: 'disable' },
                 ];
-            } else if (propertystatus === 'Unavailable') {
-                return [
-                    { label: 'View Details', icon: <FaEye />, action: 'view' },
-                    { label: 'Enable', icon: <FaCheck />, action: 'enable' },
-                ];
-            }
-        } else {
-            // Admin managing their own property
-            if (propertystatus === 'Available') {
-                return [
-                    { label: 'View Details', icon: <FaEye />, action: 'view' },
-                    { label: 'Edit', icon: <FaEdit />, action: 'edit' },
-                    { label: 'Disable', icon: <FaTimes />, action: 'disable' },
-                ];
-            } else if (propertystatus === 'Unavailable') {
+            } else { // Unavailable
                 return [
                     { label: 'View Details', icon: <FaEye />, action: 'view' },
                     { label: 'Edit', icon: <FaEdit />, action: 'edit' },
@@ -310,130 +374,154 @@ const PropertyListing = () => {
                 ];
             }
         }
-    }
 
-    return [{ label: 'View Details', icon: <FaEye />, action: 'view' }];
-};
-
+        // For non-admins (view only)
+        return [{ label: 'View Details', icon: <FaEye />, action: 'view' }];
+    };
     
-const username = localStorage.getItem('username');
-const usergroup = localStorage.getItem('usergroup'); 
+    const usergroup = localStorage.getItem('usergroup'); 
 
-const columns = [
-    { header: 'PID', accessor: 'propertyid' },
-    {
-        header: 'Image',
-        accessor: 'propertyimage',
-        render: (property) => (
-            property.propertyimage && property.propertyimage.length > 0 ? (
-                <img
-                    src={`data:image/jpeg;base64,${property.propertyimage[0]}`}
-                    alt={property.propertyname}
-                    style={{ width: 80, height: 80 }}
+    const columns = [
+        { header: 'ID', accessor: 'id' },
+        {
+            header: 'Image',
+            accessor: 'photo',
+            render: (vehicle) => (
+                vehicle.photo ? (
+                    <img
+                        src={vehicle.photo}
+                        alt={vehicle.vehicle}
+                        style={{ width: 80, height: 80, objectFit: 'cover' }}
+                    />
+                ) : (
+                    <span>No Image</span>
+                )
+            ),
+        },
+        { header: 'Vehicle', accessor: 'vehicle' },
+        { header: 'Brand', accessor: 'brand_name' },
+        { header: 'Category', accessor: 'category_name' },
+        { header: 'Region', accessor: 'region_name' },
+        { header: 'Seats', accessor: 'seat' },
+        { header: 'Transmission', accessor: 'transmission_name' },
+        { 
+            header: 'Daily Price', 
+            accessor: (vehicle) => `$${(vehicle.pricing?.daily || 0).toFixed(2)}` 
+        },
+        {
+            header: 'Status',
+            accessor: 'status',
+            render: (vehicle) => (
+                <Status value={vehicle.status === 1 ? 'Available' : 'Unavailable'} />
+            ),
+        },
+        {
+            header: 'Actions',
+            accessor: 'actions',
+            render: (vehicle) => (
+                <ActionDropdown
+                    items={vehicleDropdownItems(vehicle, usergroup)}
+                    onAction={(action) => handleAction(action, vehicle)}
                 />
-            ) : (
-                <span>No Image</span>
-            )
-        ),
-    },
-    { header: 'Name', accessor: 'propertyaddress' },
-    { header: 'Price', accessor: 'normalrate' },
-    { header: 'Cluster', accessor: 'clustername' },
-    {
-        header: 'Status',
-        accessor: 'propertystatus',
-        render: (property) => (
-            <Status value={property.propertystatus || 'Pending'} />
-        ),
-    },
-    {
-        header: 'Actions',
-        accessor: 'actions',
-        render: (property) => (
-            <ActionDropdown
-                items={propertyDropdownItems(property, username, usergroup)}
-                onAction={(action) => handleAction(action, property)}
-            />
-        ),
-    },
-];
+            ),
+        },
+    ];
 
-    // Handle page change
     const handlePageChange = (newPage) => {
         setPage(newPage);
     };
 
-    // Handle page size change
     const handlePageSizeChange = (newPageSize) => {
         setPageSize(newPageSize);
-        setPage(1); // Reset to first page when changing page size
+        setPage(1);
+    };
+
+    const handleCloseModal = () => {
+        setSelectedVehicle(null);
+    };
+
+    // Handle opening the vehicle form for creating new vehicle
+    const handleAddNewVehicle = () => {
+        setEditingVehicle(null);
+        setIsVehicleFormOpen(true);
+    };
+
+    // Close vehicle form
+    const handleCloseVehicleForm = () => {
+        setIsVehicleFormOpen(false);
+        setEditingVehicle(null);
     };
 
     return (
         <div>
             <div className="header-container">
-                <h1 className="dashboard-page-title">Property Listings</h1>
-                <SearchBar value={searchKey} onChange={(newValue) => setSearchKey(newValue)} placeholder="Search properties..." />
+                <h1 className="dashboard-page-title">Vehicle Listings</h1>
+                <SearchBar 
+                    value={searchKey} 
+                    onChange={(newValue) => setSearchKey(newValue)} 
+                    placeholder="Search vehicles..." 
+                />
             </div>
 
             <Filter filters={filters} onApplyFilters={handleApplyFilters} />
 
             <button
                 className="create-property-button"
-                onClick={() => {
-                    setEditProperty(null);
-                    setIsPropertyFormOpen(true);
-                }}
+                onClick={handleAddNewVehicle}
             >
-                Create New Property
+                <FaPlus style={{ marginRight: '8px' }} />
+                Add New Vehicle
             </button>
 
             {isLoading ? (
-            <div className="loader-box">
-                <Loader />
-            </div>
-        ) : error ? (
-            <div className="error-message">
-                Error loading properties. Please try again.
-            </div>
-        ) : (
-            <PaginatedTable
-                data={filteredProperties}
-                columns={columns}
-                rowKey="propertyid"
-                currentPage={page}
-                pageSize={pageSize}
-                totalCount={filteredProperties.length}
-                onPageChange={handlePageChange}
-                onPageSizeChange={handlePageSizeChange}
-            />
-        )}
+                <div className="loader-box">
+                    <Loader />
+                </div>
+            ) : error ? (
+                <div className="error-message">
+                    Error loading vehicles. Please try again.
+                </div>
+            ) : (
+                <PaginatedTable
+                    data={filteredVehicles}
+                    columns={columns}
+                    rowKey="id"
+                    currentPage={page}
+                    pageSize={pageSize}
+                    totalCount={filteredVehicles.length}
+                    onPageChange={handlePageChange}
+                    onPageSizeChange={handlePageSizeChange}
+                />
+            )}
 
+            {/* View Details Modal */}
             <Modal
-                isOpen={!!selectedProperty}
-                title={'Property Details'}
-                data={selectedProperty || {}}
+                isOpen={!!selectedVehicle}
+                title={'Vehicle Details'}
+                data={selectedVehicle || {}}
                 labels={displayLabels}
-                onClose={() => setSelectedProperty(null)}
+                onClose={handleCloseModal}
             />
 
-            {isPropertyFormOpen && (
-                <PropertyForm
-                    initialData={editProperty}
-                    onSubmit={() => {
-                    setIsPropertyFormOpen(false);
-                    queryClient.invalidateQueries({ queryKey: ['properties'] });
-                    displayToast('success', editProperty? 'Property updated successfully' : 'Property created successfully');
-                }}
-                    onClose={() => setIsPropertyFormOpen(false)}
-            />
-        )}
+            {/* Vehicle Form Modal */}
+            {isVehicleFormOpen && (
+                <VehicleForm
+                    isOpen={isVehicleFormOpen}
+                    onClose={handleCloseVehicleForm}
+                    onSubmit={handleVehicleSubmit}
+                    initialData={editingVehicle}
+                    brands={brands}
+                    categories={categories}
+                    regions={regions}
+                    title={editingVehicle ? 'Edit Vehicle' : 'Add New Vehicle'}
+                />
+            )}
 
             <Alert
                 isOpen={isDialogOpen}
                 title="Confirm Delete"
-                message="Are you sure you want to delete this property?"
-                onConfirm={handleDeleteProperty}
+                message="Are you sure you want to delete this vehicle? This action cannot be undone."
+                onConfirm={handleDeleteVehicle}
                 onCancel={() => setIsDialogOpen(false)}
             />
 

@@ -1,33 +1,36 @@
 import React, { useEffect, useRef } from 'react';
 import { useNavigate } from "react-router-dom";
+import { FaCar, FaGasPump, FaCheckCircle, FaShieldAlt, FaStar, FaMapMarkerAlt, FaClock } from "react-icons/fa";
+import { GiCarSeat, GiGearStickPattern } from "react-icons/gi";
+import { MdLocationPin, MdDirectionsCar } from "react-icons/md";
 
 import './Destination.css';
 
-// Import Images
-import wind_cave from '../../public/WindCave.png';
-import wind_cave2 from '../../public/WindCave2.png';
-import Damai_1 from '../../public/Bako.png';
-import Damai_2 from '../../public/Damai.png';
-import Culture from '../../public/Culture.png';
-import Kubah from '../../public/Kubah National Park.png';
-import WaterFront from '../../public/Waterfront.jpg';
-import Gunung from '../../public/Gunung.png';
-import LongHouse from '../../public/LongHouse.png';
-import Similajau from '../../public/Similajau.jpg';
-
-// Import Icon
-import { MdLocationPin } from "react-icons/md";
-
+// Import Vehicle Images
+import PeroduaMyvi from '../../public/Perodua Myvi.png';
+import PeroduaAxia from '../../public/Perodua Axia.png';
+import HondaCity from '../../public/Honda City.png';
+import ToyotaVios from '../../public/Toyota Vios.png';
+import ProtonSaga from '../../public/Proton Saga.png';
+import PeroduaAlza from '../../public/Perodua Alza.png';
+import PeroduaBezza from '../../public/Perodua Bezza.png';
+import PeroduaMyviNew from '../../public/Perodua Myvi (New).png';
+import ToyotaFortuner from '../../public/Toyota Fortuner.png';
+import ToyotaSienta from '../../public/Toyota Sienta.png';
+import PeroduaAlzaNew from '../../public/Perodua Alza (New).png';
+import PeroduaAruz from '../../public/Perodua Aruz.png';
+import NissanUrvan from '../../public/Nissan Urvan NV350.png';
+import homeBackground from '../../public/home.png';
 const Destination = () => {
   const imagesRef = useRef([]);
   const sectionRefs = useRef([]);
   const navigate = useNavigate();
 
   useEffect(() => {
-    // 3D rotation effect
+    // 3D rotation effect for vehicle images
     imagesRef.current.forEach((item) => {
       if (!item) return; // Guard clause for null refs
-      
+
       const handleMouseMove = (e) => {
         const rect = item.getBoundingClientRect();
         const positionX = ((e.clientX - rect.left) / rect.width) * 100;
@@ -63,7 +66,7 @@ const Destination = () => {
       { threshold: 0.2, rootMargin: "0px 0px -50px 0px" }
     );
 
-    // Observe all elements in sectionRefs (including .t-card elements)
+    // Observe all elements in sectionRefs
     sectionRefs.current.forEach((section) => {
       if (section) observer.observe(section);
     });
@@ -71,243 +74,357 @@ const Destination = () => {
     return () => observer.disconnect();
   }, []);
 
+  // Featured vehicles data
+  const featuredVehicles = [
+    {
+      id: 1,
+      name: "Perodua Myvi",
+      type: "Hatchback",
+      brand: "Perodua",
+      capacity: 5,
+      transmission: "Automatic",
+      fuelType: "Petrol",
+      pricePerDay: 120,
+      image: PeroduaMyvi,
+      features: ["Air Conditioning", "Power Windows", "USB Port", "Touchscreen"],
+      rating: 4.5,
+      availability: true,
+      popular: true
+    },
+    {
+      id: 2,
+      name: "Honda City",
+      type: "Sedan",
+      brand: "Honda",
+      capacity: 5,
+      transmission: "Automatic",
+      fuelType: "Petrol",
+      pricePerDay: 180,
+      image: HondaCity,
+      features: ["Premium Sound", "Push Start", "Rear Camera", "Lane Watch"],
+      rating: 4.7,
+      availability: true,
+      popular: true
+    },
+    {
+      id: 3,
+      name: "Toyota Fortuner",
+      type: "SUV",
+      brand: "Toyota",
+      capacity: 7,
+      transmission: "Automatic",
+      fuelType: "Diesel",
+      pricePerDay: 250,
+      image: ToyotaFortuner,
+      features: ["4x4", "Leather Seats", "Sunroof", "Premium Audio"],
+      rating: 4.8,
+      availability: true,
+      popular: false
+    },
+  ];
+
+  // Popular vehicles data
+  const popularVehicles = [
+    {
+      id: 4,
+      name: "Perodua Axia",
+      type: "Economy",
+      brand: "Perodua",
+      capacity: 5,
+      transmission: "Automatic",
+      fuelType: "Petrol",
+      pricePerDay: 90,
+      image: PeroduaAxia,
+      features: ["Air Conditioning", "Economical", "Easy Parking"],
+      rating: 4.2,
+      availability: true
+    },
+    {
+      id: 5,
+      name: "Toyota Vios",
+      type: "Sedan",
+      brand: "Toyota",
+      capacity: 5,
+      transmission: "Automatic",
+      fuelType: "Petrol",
+      pricePerDay: 160,
+      image: ToyotaVios,
+      features: ["Dual VVT-i", "ECO Mode", "Smart Entry", "7 Airbags"],
+      rating: 4.6,
+      availability: true
+    },
+    {
+      id: 6,
+      name: "Proton Saga",
+      type: "Sedan",
+      brand: "Proton",
+      capacity: 5,
+      transmission: "Manual/Automatic",
+      fuelType: "Petrol",
+      pricePerDay: 100,
+      image: ProtonSaga,
+      features: ["Economical", "Spacious Boot", "Touchscreen"],
+      rating: 4.3,
+      availability: true
+    },
+  ];
+
+  // Family vehicles data
+  const familyVehicles = [
+    {
+      id: 7,
+      name: "Perodua Alza",
+      type: "MPV",
+      brand: "Perodua",
+      capacity: 7,
+      transmission: "Automatic",
+      fuelType: "Petrol",
+      pricePerDay: 150,
+      image: PeroduaAlza,
+      features: ["7 Seater", "Foldable Seats", "Dual Airbags"],
+      rating: 4.4,
+      availability: true
+    },
+    {
+      id: 8,
+      name: "Toyota Sienta",
+      type: "MPV",
+      brand: "Toyota",
+      capacity: 7,
+      transmission: "Automatic",
+      fuelType: "Petrol",
+      pricePerDay: 200,
+      image: ToyotaSienta,
+      features: ["Sliding Doors", "Spacious Interior", "Dual Zone AC"],
+      rating: 4.6,
+      availability: true
+    },
+    {
+      id: 9,
+      name: "Perodua Aruz",
+      type: "SUV",
+      brand: "Perodua",
+      capacity: 7,
+      transmission: "Automatic",
+      fuelType: "Petrol",
+      pricePerDay: 170,
+      image: PeroduaAruz,
+      features: ["7 Seater", "Advanced Safety", "High Ground Clearance"],
+      rating: 4.5,
+      availability: true
+    },
+  ];
+
+  const handleBookNow = (vehicleId) => {
+    navigate('/product', { state: { vehicleId } });
+  };
+
+  const handleViewAll = () => {
+    navigate('/product');
+  };
+
+  const handleQuickRent = () => {
+    navigate('/product');
+  };
+
+  const renderVehicleCard = (vehicle) => (
+    <div
+      key={vehicle.id}
+      className="vehicle_card"
+      ref={(el) => sectionRefs.current.push(el)}
+    >
+      <div className="vehicle_image_container">
+        <img
+          src={vehicle.image}
+          alt={vehicle.name}
+          className="vehicle_image"
+          ref={(el) => imagesRef.current.push(el)}
+        />
+        {vehicle.availability && (
+          <span className="availability_badge">
+            <FaCheckCircle /> Available
+          </span>
+        )}
+        {vehicle.popular && (
+          <span className="popular_badge">
+            <FaStar /> Popular
+          </span>
+        )}
+      </div>
+
+      <div className="vehicle_info">
+        <div className="vehicle_header">
+          <div>
+            <h3>{vehicle.name}</h3>
+            <p className="vehicle_brand">{vehicle.brand}</p>
+          </div>
+          <span className="vehicle_type">{vehicle.type}</span>
+        </div>
+
+
+        <div className="vehicle_specs">
+          <div className="spec_item">
+            <GiCarSeat className="spec_icon" />
+            <span>{vehicle.capacity} Seats</span>
+          </div>
+          <div className="spec_item">
+            <GiGearStickPattern className="spec_icon" />
+            <span>{vehicle.transmission}</span>
+          </div>
+          <div className="spec_item">
+            <FaGasPump className="spec_icon" />
+            <span>{vehicle.fuelType}</span>
+          </div>
+        </div>
+
+        <div className="vehicle_features">
+          {vehicle.features.slice(0, 3).map((feature, idx) => (
+            <div key={idx} className="feature_item">
+              <FaCheckCircle className="feature_icon" />
+              <span>{feature}</span>
+            </div>
+          ))}
+        </div>
+
+        <div className="vehicle_footer">
+          <div className="price_section">
+            <span className="price_label">From</span>
+            <div className="price_amount">
+              <span className="currency">RM</span>
+              <span className="price">{vehicle.pricePerDay}</span>
+              <span className="period">/day</span>
+            </div>
+          </div>
+
+          <button
+            className="book_btn"
+            onClick={() => handleBookNow(vehicle.id)}
+          >
+            <FaCar className="btn_icon" />
+            Book Now
+          </button>
+        </div>
+      </div>
+    </div>
+  );
+
   return (
     <div className="destination-container">
-      {/* Destination */}
-      <div className="destination">
-        <h1>Popular Destinations</h1>
+      {/* Hero Section */}
+      <div className="hero-section" style={{ backgroundImage: `url(${homeBackground})` }}>
+        <div className="hero-content">
+          <h1>Drive Your Adventure in Sarawak</h1>
+          <p>Premium car rental service with flexible options for every journey</p>
 
-        <div className="Main_description" ref={(el) => (sectionRefs.current[1] = el)}>
-          <p>Tours give you the opportunity to see a lot within a time frame</p>
-        </div>
-
-        <div className="destinations-wrapper">
-          <div className="first-des" ref={(el) => (sectionRefs.current[2] = el)}>
-            <div className="des-text">
-              <h2>Wind Cave Nature Reserve</h2>
-              <p className="location">
-                <MdLocationPin className="icon_location" /> Bau, Sarawak
-              </p>
-
-              <p className="location_description">
-                Located near the town of Bau, Wind Cave offers a fascinating glimpse into Sarawak's natural wonders.
-                The cave gets its name from the cool, gentle breeze that flows through its narrow passages, providing
-                a refreshing atmosphere even in the heart of the jungle.
-              </p>
-
-              <div className="buttons_destination">
-                <button onClick={() => navigate('/about_sarawak')}>SEE MORE</button>
+          <div className="hero-stats">
+            <div className="stat-item">
+              <MdDirectionsCar className="stat-icon" />
+              <div>
+                <h3>50+</h3>
+                <p>Vehicles</p>
               </div>
             </div>
-
-            <div className="image" ref={(el) => (imagesRef.current[0] = el)}>
-              <img alt="Wind Cave" src={wind_cave} />
-              <img alt="Wind Cave 2" src={wind_cave2} />
+            <div className="stat-item">
+              <FaMapMarkerAlt className="stat-icon" />
+              <div>
+                <h3>15+</h3>
+                <p>Pickup Locations</p>
+              </div>
+            </div>
+            <div className="stat-item">
+              <FaShieldAlt className="stat-icon" />
+              <div>
+                <h3>24/7</h3>
+                <p>Roadside Assistance</p>
+              </div>
             </div>
           </div>
 
-          <div className="first-des" ref={(el) => (sectionRefs.current[3] = el)}>
-            <div className="des-text">
-              <h2>Damai Beach</h2>
-              <p className="location">
-                <MdLocationPin className="icon_location" /> Teluk Bandung Santubong
-              </p>
+          <button className="hero-cta" onClick={handleQuickRent}>
+            <FaCar /> Quick Rent
+          </button>
+        </div>
+      </div>
 
-              <p className="location_description">
-                Nestled at the foot of Mount Santubong, Damai Beach is one of Sarawak's most beautiful coastal destinations.
-                With its golden sands and clear waters, it's perfect for swimming, sunbathing, and beach sports. Visitors can
-                enjoy water activities like kayaking and snorkeling in nearby coral reefs.
-              </p>
+      {/* Featured Vehicles */}
+      <div className="section featured-section">
+        <div className="section-header">
+          <h2>Featured Vehicles</h2>
+          <p>Top picks for your Sarawak adventure</p>
+        </div>
 
-              <div className="buttons_destination">
-                <button onClick={() => navigate('/about_sarawak')}>SEE MORE</button>
-              </div>
-            </div>
+        <div className="vehicle_grid">
+          {featuredVehicles.map(renderVehicleCard)}
+        </div>
+      </div>
 
-            <div className="image" ref={(el) => (imagesRef.current[1] = el)}>
-              <img alt="Damai Beach 1" src={Damai_1} />
-              <img alt="Damai Beach 2" src={Damai_2} />
-            </div>
+      {/* Why Choose Us */}
+      <div className="section benefits-section">
+        <div className="section-header">
+          <h2>Why Choose GoCar Rental?</h2>
+          <p>Experience hassle-free car rental in Sarawak</p>
+        </div>
+
+        <div className="benefits-grid">
+          <div className="benefit-card">
+            <FaShieldAlt className="benefit-icon" />
+            <h3>Full Insurance</h3>
+            <p>Comprehensive coverage for peace of mind on every journey</p>
+          </div>
+
+          <div className="benefit-card">
+            <FaClock className="benefit-icon" />
+            <h3>24/7 Support</h3>
+            <p>Round-the-clock assistance for any road emergencies</p>
+          </div>
+
+          <div className="benefit-card">
+            <FaMapMarkerAlt className="benefit-icon" />
+            <h3>Flexible Locations</h3>
+            <p>Pick up and return at multiple convenient locations</p>
+          </div>
+
+          <div className="benefit-card">
+            <MdDirectionsCar className="benefit-icon" />
+            <h3>New Fleet</h3>
+            <p>Well-maintained vehicles with regular servicing</p>
           </div>
         </div>
       </div>
 
-      {/* Popular Trip */}
-      <div className="trip">
-        <h1>Popular Trips</h1>
-        <p>Find Your Path, Create Your Memories</p>
-
-        {/* Trip Cards */}
-        <div className="tripcard">
-          {/* Card 1 */}
-          <div className="t-card" ref={(el) => sectionRefs.current.push(el)}>
-            <div className="t-image">
-              <img alt="Cave" src={Culture} />
-            </div>
-
-            <h3>Sarawak Cultural Village</h3>
-            <p>
-              Located near Damai Beach, this "living museum" highlights Sarawak's diverse cultures.
-              Visitors can explore traditional houses and experience performances by major ethnic groups,
-              including the Iban, Bidayuh, and Orang Ulu. A great spot to learn about Sarawak's cultural heritage.
-            </p>
-          </div>
-
-          {/* Card 2 */}
-          <div className="t-card" ref={(el) => sectionRefs.current.push(el)}>
-            <div className="t-image">
-              <img alt="Kubah" src={Kubah} />
-            </div>
-
-            <h3>Kubah National Park</h3>
-            <p>
-              Kubah National Park, near Kuching, is famous for its waterfalls, clear streams, and rich biodiversity.
-              It's a great spot for eco-tourism with activities like hiking, bird-watching, and a night trekking trail
-              to explore the jungle's nighttime ambiance.
-            </p>
-          </div>
-
-          {/* Card 3 */}
-          <div className="t-card" ref={(el) => sectionRefs.current.push(el)}>
-            <div className="t-image">
-              <img alt="Waterfront" src={WaterFront} />
-            </div>
-
-            <h3>Sarawak Waterfront</h3>
-            <p>
-              The Sarawak Waterfront in Kuching is a scenic riverside promenade known for
-              its blend of heritage and modern charm. With historic buildings, local craft shops,
-              and riverfront cafes, it's a vibrant spot to experience Sarawak's culture.
-            </p>
-          </div>
+      {/* Popular Vehicles */}
+      <div className="section popular-section">
+        <div className="section-header">
+          <h2>Most Popular</h2>
+          <p>Our customers' favorite choices</p>
         </div>
 
-        {/* Trip Cards Row 2*/}
-        <div className="tripcard">
-          {/* Card 1 */}
-          <div className="t-card" ref={(el) => sectionRefs.current.push(el)}>
-            <div className="t-image">
-              <img alt="Gunung" src={Gunung} />
-            </div>
-
-            <h3>Gunung Mulu National Park</h3>
-            <p>
-              A UNESCO World Heritage Site, this park is famous for its vast cave systems, limestone karsts, 
-              and lush rainforest. The Deer Cave and Clearwater Cave are among the world's largest caves, and the Pinnacles, 
-              sharp limestone formations, offer a stunning view for trekkers.
-            </p>
-          </div>
-
-          {/* Card 2 */}
-          <div className="t-card" ref={(el) => sectionRefs.current.push(el)}>
-            <div className="t-image">
-              <img alt="LongHouse" src={LongHouse} />
-            </div>
-
-            <h3>Annah Rais Longhouse</h3>
-            <p>
-              A traditional Bidayuh tribe longhouse where visitors can experience the indigenous lifestyle, 
-              interact with locals, and taste their homemade Tuak (rice wine). It offers an authentic insight into Sarawak's 
-              tribal heritage.
-            </p>
-          </div>
-
-          {/* Card 3 */}
-          <div className="t-card" ref={(el) => sectionRefs.current.push(el)}>
-            <div className="t-image">
-              <img alt="Similajau" src={Similajau} />
-            </div>
-
-            <h3>Similajau National Park</h3>
-            <p>
-              This park features golden sandy beaches, mangrove forests, and diverse wildlife. 
-              It is a paradise for nature lovers and hikers, offering scenic jungle trails, waterfalls 
-              and a chance to spot dolphins along the coast.
-            </p>
-          </div>
+        <div className="vehicle_grid">
+          {popularVehicles.map(renderVehicleCard)}
         </div>
       </div>
 
-      {/* Rooms & Suites Section */}
-      <div className="room_section">
-        <div className="room_des">
-          <h1>Rooms & Suites</h1>
-          <p>Rest is for going further</p>
+      {/* Family Vehicles */}
+      <div className="section family-section">
+        <div className="section-header">
+          <h2>Family & Group</h2>
+          <p>Spacious vehicles for group travels</p>
         </div>
 
-        <div className="wrapper_room">
-          <div className="container_room">
-            {/* Room 1 */}
-            <input type="radio" name="slide" id="c1" className="room_display" defaultChecked />
-            <label htmlFor="c1" className="card_room">
-              <div className="row">
-                <div className="icon_room">1</div>
-                <div className="description_room">
-                  <h4>Family Suite</h4>
-                  <p>1 King-sized bed / 2 Queen-sized beds</p>
-                </div>
-              </div>
-            </label>
+        <div className="vehicle_grid">
+          {familyVehicles.map(renderVehicleCard)}
+        </div>
+      </div>
 
-            {/* Room 2 */}
-            <input type="radio" name="slide" id="c2" className="room_display" />
-            <label htmlFor="c2" className="card_room">
-              <div className="row">
-                <div className="icon_room">2</div>
-                <div className="description_room">
-                  <h4>Seaview Deluxe</h4>
-                  <p>1 King-sized bed / 2 Queen-sized beds</p>
-                </div>
-              </div>
-            </label>
-
-            {/* Room 3 */}
-            <input type="radio" name="slide" id="c3" className="room_display" />
-            <label htmlFor="c3" className="card_room">
-              <div className="row">
-                <div className="icon_room">3</div>
-                <div className="description_room">
-                  <h4>Superior Poolside</h4>
-                  <p>1 King-sized bed / 2 Queen-sized beds</p>
-                </div>
-              </div>
-            </label>
-
-            {/* Room 4 */}
-            <input type="radio" name="slide" id="c4" className="room_display" />
-            <label htmlFor="c4" className="card_room">
-              <div className="row">
-                <div className="icon_room">4</div>
-                <div className="description_room">
-                  <h4>Presidential Suite</h4>
-                  <p>1 King-sized bed / 2 Queen-sized beds</p>
-                </div>
-              </div>
-            </label>
-
-            {/* Room 5 */}
-            <input type="radio" name="slide" id="c5" className="room_display" />
-            <label htmlFor="c5" className="card_room">
-              <div className="row">
-                <div className="icon_room">5</div>
-                <div className="description_room">
-                  <h4>Chalet</h4>
-                  <p>1 King-sized bed / 2 Queen-sized beds</p>
-                </div>
-              </div>
-            </label>
-
-            {/* Room 6 */}
-            <input type="radio" name="slide" id="c6" className="room_display" />
-            <label htmlFor="c6" className="card_room">
-              <div className="row">
-                <div className="icon_room">6</div>
-                <div className="description_room">
-                  <h4>Baruk Suite</h4>
-                  <p>1 King-sized bed / 2 Queen-sized beds</p>
-                </div>
-              </div>
-            </label>
+      {/* CTA Section */}
+      <div className="cta-section">
+        <div className="cta-content">
+          <h2>Ready to Explore Sarawak?</h2>
+          <p>Book your perfect vehicle today and start your adventure</p>
+          <div className="cta-buttons">
+            <button className="cta-primary" onClick={handleViewAll}>
+              Browse All Vehicles
+            </button>
           </div>
         </div>
       </div>

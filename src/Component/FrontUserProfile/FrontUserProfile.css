@@ -1,231 +1,250 @@
 .front-profile-container {
     display: flex;
-    padding: 40px;
     justify-content: center;
-    margin-top: 120px;
-    padding-bottom: 75px;
+    padding: 40px 20px;
+    margin-top: 100px;
+    min-height: calc(100vh - 200px);
+    background: #f8f9fa;
 }
 
 .front-profile-layout {
     display: flex;
     width: 100%;
-    max-width: 1000px;
+    max-width: 1200px;
+    gap: 30px;
 }
 
 .front-sidebar-card {
     width: 300px;
-    background-color: #f8f9fa;
-    border: 1px solid #ddd;
-    border-radius: 8px;
-    margin-right: 30px;
-    padding: 20px;
-    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+    background: white;
+    border-radius: 16px;
+    padding: 25px;
+    box-shadow: 0 4px 20px rgba(0, 0, 0, 0.08);
+    border: 1px solid #e9ecef;
     position: sticky;
-    top: 40px;
+    top: 120px;
     height: fit-content;
 }
 
 .front-tab {
     display: flex;
     align-items: center;
-    padding: 15px;
+    padding: 16px 20px;
     cursor: pointer;
     border: none;
     text-align: left;
-    transition: background-color 0.3s, color 0.3s;
-    border-radius: 4px;
-    margin-bottom: 10px;
+    transition: all 0.3s ease;
+    border-radius: 12px;
+    margin-bottom: 8px;
+    background: transparent;
+    color: #495057;
+    font-weight: 500;
+    width: 100%;
 }
 
 .front-tab:hover {
-    background-color: #e9ecef;
+    background: #f1f3f5;
+    transform: translateX(5px);
 }
 
 .front-tab-icon {
-    margin-right: 10px;
+    margin-right: 12px;
+    font-size: 1.1rem;
+    color: #6c757d;
 }
 
 .front-tab.active {
-    background: #CC8C18;
+    background: linear-gradient(135deg, #FF6B35, #FF8C42);
+    color: white;
+    box-shadow: 0 4px 15px rgba(255, 107, 53, 0.2);
+}
+
+.front-tab.active .front-tab-icon {
     color: white;
 }
 
 .front-content-card {
     flex: 1;
-    padding: 10px;
-    overflow: auto;
+    background: white;
+    border-radius: 16px;
+    padding: 40px;
+    box-shadow: 0 4px 20px rgba(0, 0, 0, 0.08);
+    border: 1px solid #e9ecef;
 }
 
 .front-content-card h2 {
-    font-size: 2.5rem;
-    font-weight: bold;
-    margin-bottom: 20px;
+    font-size: 2.2rem;
+    font-weight: 700;
+    color: #1f2937;
+    margin-bottom: 30px;
+    padding-bottom: 20px;
+    border-bottom: 2px solid #f1f3f5;
 }
 
 .front-profile-field {
     display: flex;
-    justify-content: space-between;
     align-items: center;
-    position: relative;
-    border-bottom: 1px solid #ccc;
-    padding: 30px 30px;
-    margin-top: 12px;
+    padding: 25px 0;
+    border-bottom: 1px solid #e9ecef;
+    transition: all 0.3s ease;
+}
+
+.front-profile-field:hover {
+    background: #fafafa;
+    padding: 25px 20px;
+    border-radius: 12px;
 }
 
 .front-field-label {
-    font-weight: bold;
-    color: #333;
-    flex: 1;
-    margin:10px;
+    font-weight: 600;
+    color: #495057;
+    font-size: 0.95rem;
+    width: 200px;
+    flex-shrink: 0;
 }
 
 .front-field-value {
-    color: #555;
-    flex: 2;
-    text-align: left;
+    color: #1f2937;
+    font-size: 1rem;
+    flex: 1;
 }
 
 .front-edit-link {
-    color: #CC8C18;
-    text-decoration: underline;
+    color: #FF6B35;
+    text-decoration: none;
     cursor: pointer;
-    flex: 1;
-    text-align: right;
+    font-weight: 500;
+    padding: 8px 16px;
+    border-radius: 8px;
+    transition: all 0.3s ease;
+    border: 2px solid transparent;
+}
+
+.front-edit-link:hover {
+    color: #FF8C42;
+    background: #FFF5F0;
+    border-color: #FF6B35;
 }
 
 .front-edit-section {
     margin-top: 30px;
-    text-align: right;
-    position: relative;
-    border-bottom: 1px solid #ccc;
-    z-index: 1;
+    padding: 30px;
+    background: #f8f9fa;
+    border-radius: 12px;
+    border: 1px solid #e9ecef;
 }
 
-.front-edit-section input {
-    width: calc(100% - 20px);
-    padding: 12px;
-    margin-bottom: 25px;
-    border: 1px solid #ccc;
-    border-radius: 4px;
-    font-size: 1em;
+.front-edit-section input,
+.front-select-dropdown,
+.front-edit-section .country-dropdown {
+    width: 100%;
+    padding: 16px;
+    margin-bottom: 20px;
+    border: 2px solid #e9ecef;
+    border-radius: 10px;
+    font-size: 1rem;
+    transition: all 0.3s ease;
+    background: white;
+}
+
+.front-edit-section input:focus,
+.front-select-dropdown:focus,
+.front-edit-section .country-dropdown:focus {
+    outline: none;
+    border-color: #FF6B35;
+    box-shadow: 0 0 0 4px rgba(255, 107, 53, 0.1);
 }
 
 .front-edit-section button {
-    padding: 9px 20px;
+    padding: 14px 28px;
     margin-right: 12px;
-    margin-bottom: 20px;
-    background: #CC8C18;
+    background: linear-gradient(135deg, #FF6B35, #FF8C42);
     color: white;
     border: none;
-    border-radius: 4px;
+    border-radius: 10px;
     cursor: pointer;
-    font-size: 1em;
+    font-size: 1rem;
+    font-weight: 600;
+    transition: all 0.3s ease;
 }
 
 .front-edit-section button:hover {
-    background-color: #653600;
-    color: white;
+    transform: translateY(-2px);
+    box-shadow: 0 6px 20px rgba(255, 107, 53, 0.2);
 }
 
-.front-edit-section .country-dropdown {
-    width: calc(100% - 20px);
-    padding: 12px;
-    margin-bottom: 25px;
-    border: 1px solid #ccc;
-    border-radius: 4px;
-    background-color: white;
-    font-size: 1em;
-    color: #333;
+.front-edit-section button.secondary {
+    background: white;
+    color: #FF6B35;
+    border: 2px solid #FF6B35;
 }
 
-.front-select-dropdown {
-    width: calc(100% - 20px);
-    padding: 12px;
-    border: 1px solid #ccc;
-    border-radius: 4px;
-    font-size: 1em;
-    margin-bottom: 25px;
-}
-
-.front-select-dropdown:focus {
-    outline: none;
-    border-color: #007BFF;
-}
-
-.front-edit-section .country-dropdown:focus {
-    border-color: #007BFF;
-    outline: none;
-    box-shadow: 0 0 0 0.2rem rgba(0, 123, 255, 0.25);
+.front-edit-section button.secondary:hover {
+    background: #FFF5F0;
 }
 
 .front-avatar-section {
     display: flex;
     align-items: center;
+    gap: 20px;
 }
 
 .front-avatar-image {
-    width: 80px;
-    height: 80px;
+    width: 100px;
+    height: 100px;
     border-radius: 50%;
-    margin-right: 15px;
+    object-fit: cover;
+    border: 4px solid white;
+    box-shadow: 0 4px 15px rgba(0, 0, 0, 0.1);
 }
 
 .front-eye-icon {
-    position: relative;
-    right: 30px;
+    position: absolute;
+    right: 15px;
     top: 50%;
+    transform: translateY(-50%);
     cursor: pointer;
-    color: #CC8C18;
-    z-index: 1;
+    color: #6c757d;
+    background: none;
+    border: none;
+    font-size: 1.2rem;
+    padding: 5px;
 }
 
-/* 991px Media Query */
+.front-eye-icon:hover {
+    color: #FF6B35;
+}
+
+.front-password-field {
+    position: relative;
+    width: 100%;
+}
+
+.front-password-field input {
+    width: 100%;
+    padding-right: 50px;
+}
+
+/* Responsive Design */
 @media (max-width: 991px) {
-    .front-profile-container {
-        padding: 30px 25px;
-    }
-    
     .front-profile-layout {
         max-width: 900px;
     }
     
     .front-sidebar-card {
-        width: 260px;
-        margin-right: 25px;
+        width: 280px;
+        padding: 20px;
     }
     
-    .front-tab {
-        padding: 12px;
-        font-size: 0.95em;
-    }
-    
-    .front-content-card h2 {
-        font-size: 2.2rem;
-    }
-    
-    .front-profile-field {
-        padding: 25px 20px;
-    }
-    
-    .front-field-label {
-        margin: 8px;
-        font-size: 13px;
-    }
-    
-    .front-edit-section {
-        margin-top: 25px;
-    }
-
-    .front-field-value{
-        font-size: 13px;
+    .front-content-card {
+        padding: 30px;
     }
 }
 
-/* 768px Media Query */
 @media (max-width: 768px) {
     .front-profile-container {
-        padding: 20px 15px;
-        margin-top: 100px;
+        padding: 20px;
+        margin-top: 80px;
     }
 
     .front-profile-layout {
@@ -234,122 +253,74 @@
 
     .front-sidebar-card {
         width: 100%;
-        margin-right: 0;
-        margin-bottom: 20px;
         position: static;
         display: flex;
         flex-wrap: wrap;
         gap: 10px;
+        padding: 20px;
     }
 
     .front-tab {
         flex: 1;
-        min-width: 140px;
+        min-width: 150px;
         justify-content: center;
-        padding: 12px 8px;
+        padding: 14px 12px;
         margin-bottom: 0;
     }
 
     .front-content-card {
-        padding: 15px;
+        padding: 25px;
     }
 
     .front-content-card h2 {
-        font-size: 2rem;
-    }
-
-    .front-profile-field {
-        padding: 20px 15px;
-    }
-
-    .front-field-label {
-        margin: 5px;
-    }
-
-    .front-password-field {
-        position: relative;
-    }
-    
-    .front-edit-section input,
-    .front-select-dropdown,
-    .front-edit-section .country-dropdown {
-        width: 100%;
-        margin-bottom: 20px;
-    }
-    
-    .front-eye-icon {
-        right: 10px;
-        top: 16px;
-    }
-
-    .front-avatar-image {
-        width: 60px;
-        height: 60px;
-    }
-}
-
-/* 480px Media Query */
-@media (max-width: 480px) {
-    .front-profile-container {
-        padding: 10px;
-    }
-
-    .front-content-card h2 {
-        font-size: 1.5rem;
+        font-size: 1.8rem;
     }
 
     .front-profile-field {
         flex-direction: column;
         align-items: flex-start;
-        padding: 15px 10px;
+        padding: 20px 15px;
+        gap: 10px;
     }
 
     .front-field-label {
-        margin: 5px 0;
         width: 100%;
     }
 
     .front-field-value {
         width: 100%;
-        margin: 5px 0;
-        text-align: left;
     }
 
     .front-edit-link {
-        width: 100%;
-        text-align: left;
-        margin-top: 5px;
+        align-self: flex-start;
+    }
+}
+
+@media (max-width: 480px) {
+    .front-profile-container {
+        padding: 15px;
+    }
+
+    .front-content-card h2 {
+        font-size: 1.6rem;
+    }
+
+    .front-profile-field {
+        padding: 15px;
     }
 
     .front-edit-section {
-        margin-top: 15px;
-    }
-
-    .front-edit-section input {
-        width: 100%;
-        padding: 10px;
-        margin-bottom: 15px;
+        padding: 20px;
     }
 
     .front-edit-section button {
         width: 100%;
         margin-right: 0;
+        margin-bottom: 10px;
     }
-    
-    .front-password-field {
-        position: relative;
-        width: 100%;
-    }
-    
-    .front-password-field input {
-        width: 100%;
-        padding-right: 35px;
-    }
-    
-    .front-password-field .front-eye-icon {
-        position: absolute;
-        right: 10px;
-        top: 50%;
-        transform: translateY(-50%);
+
+    .front-avatar-image {
+        width: 80px;
+        height: 80px;
     }
 }

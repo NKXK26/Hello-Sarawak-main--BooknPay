@@ -3,21 +3,15 @@ import { Link, useNavigate } from 'react-router-dom';
 import './Login.css';
 
 // Import Assets
-import video from '../../../public/Sarawak_2.mp4';
-import logo from '../../../public/Sarawak_icon.png';
+import logo from '../../../public/Perodua Axia.png';
 
 // Import Icons
-import { FaMailBulk, FaUserCircle } from 'react-icons/fa';
-import { RiLockPasswordFill } from 'react-icons/ri';
+import { FaUserCircle, FaLock, FaEnvelope, FaCar, FaKey } from 'react-icons/fa';
 import { IoEyeSharp } from "react-icons/io5";
 import { FaEyeSlash } from "react-icons/fa";
-import { FcGoogle } from "react-icons/fc";
-import { FaFacebook } from "react-icons/fa";
-import { AiFillInstagram } from "react-icons/ai";
 
 // Import API function
-import { loginUser, forgotPassword, googleLogin } from '../../../../Api/api';
-import { useGoogleLogin } from '@react-oauth/google';
+import { loginUser, forgotPassword } from '../../../../Api/api';
 
 // Import Toast
 import Toast from '../../../Component/Toast/Toast';
@@ -54,7 +48,6 @@ const Login = () => {
         localStorage.setItem('usergroup', data.usergroup);
         localStorage.setItem('userid', data.userid);
         localStorage.setItem('uactivation', data.uactivation);
-        localStorage.setItem('plainPassword', password);
 
         console.log('User Group:', data.usergroup);
         console.log('User Activation:', data.uactivation);
@@ -107,168 +100,145 @@ const Login = () => {
     setShowPassword((prev) => !prev);
   };
 
-const googleLoginHandler = useGoogleLogin({
-  flow: 'implicit',
-  onSuccess: async (tokenResponse) => {
-    
-    try {
-      // Store token in localStorage
-      localStorage.setItem("googleAccessToken", tokenResponse.access_token);
-      
-      // Pass token to our API
-      const data = await googleLogin(tokenResponse.access_token);
-      
-      if (data.uactivation === 'Inactive') {
-        displayToast('error', 'Your account is inactive.');
-        return;
-      }
-      
-      localStorage.setItem("isLoggedIn", "true");
-      localStorage.setItem("userid", data.userid);
-      localStorage.setItem("username", data.username);
-      localStorage.setItem("usergroup", data.usergroup);
-      if (data.uimage) localStorage.setItem("uimage", data.uimage);
-      
-      displayToast("success", "Login successful! Redirecting...");
-      
-      // Redirect based on user group
-      if (data.usergroup === 'Customer') {
-        setTimeout(() => navigate('/home'), 2000);
-      } else if (data.usergroup === 'Owner') {
-        setTimeout(() => navigate('/owner_dashboard'), 2000);
-      } else if (data.usergroup === 'Moderator') {
-        setTimeout(() => navigate('/moderator_dashboard'), 2000);
-      } else if (data.usergroup === 'Administrator') {
-        setTimeout(() => navigate('/administrator_dashboard'), 2000);
-      } else {
-        displayToast('error', 'Invalid User Group.');
-      }
-    } catch (error) {
-      console.error("Google login failed:", error);
-      displayToast("error", error.message || "An unexpected error occurred. Please try again.");
-    }
-  },
-  onError: (errorResponse) => {
-    console.error("Google Sign-In Error:", errorResponse);
-    displayToast("error", "Google sign-in failed. Please try again.");
-  }
-});
-
   return (
-    <div className="loginPage flex">
+    <div className="loginPage">
       {showToast && <Toast type={toastType} message={toastMessage} />}
 
-      <div className="container flex">
-        <div className="videoDiv">
-          <video src={video} autoPlay muted loop></video>
-          <div className="textDiv">
-            <h2 className="title_A">Hello Sarawak</h2>
-            <h3 className="title_B">Your Journey Begins</h3>
-          </div>
-          <div className="footerDiv flex">
-            <span className="text">Don't Have An Account?</span>
-            <Link to={'/register'}>
-              <button className="btn">Sign Up</button>
-            </Link>
-          </div>
-        </div>
-
-        <div className="formDiv flex">
-          <div className="headerDiv">
-            <img src={logo} alt="Logo" />
-            <div className="textDiv">
-              <h3 className="title_C">
-                Welcome To
-                <br />
-                Hello Sarawak
-              </h3>
+      <div className="loginContainer">
+        {/* Top Brand Header */}
+        <div className="loginHeader">
+          <div className="brandSection">
+            <div className="brandText">
+              <h1 className="brandTitle">Go<span className="brandHighlight">Car</span></h1>
             </div>
           </div>
-
-          {showForgotPassword ? (
-            <form onSubmit={handleForgotPassword} className="form grid">
-              <div className="inputDiv">
-                <label htmlFor="email">Email</label>
-                <div className="input flex">
-                  <FaMailBulk className="icon" />
-                  <input
-                    type="email"
-                    id="email"
-                    placeholder="Enter Email"
-                    value={email}
-                    onChange={(e) => setEmail(e.target.value)}
-                    required
-                  />
-                </div>
-              </div>
-
-              <br />
-
-              <button type="submit" className="btn">Send New Password</button>
-              <button type="button" className="btn" onClick={() => setShowForgotPassword(false)}>Back To Login</button>
-            </form>
-          ) : (
-            <form onSubmit={handleSubmit} className="form grid">
-              <div className="inputDiv">
-                <label htmlFor="username">Username or Email</label>
-                <div className="input flex">
-                  <FaUserCircle className="icon" />
-                  <input
-                    type="text"
-                    id="username"
-                    placeholder="Enter Username or Email"
-                    value={username}
-                    onChange={(e) => setUsername(e.target.value)}
-                    required
-                  />
-                </div>
-              </div>
-
-              <div className="inputDiv">
-                <label htmlFor="password">Password</label>
-                <div className="input flex">
-                  <RiLockPasswordFill className="icon" />
-                  <input
-                    type={showPassword ? "text" : "password"}
-                    id="password"
-                    placeholder="Enter Password"
-                    value={password}
-                    onChange={(e) => setPassword(e.target.value)}
-                    required
-                  />
-                  {showPassword ? (
-                    <IoEyeSharp className="icon_eye" onClick={togglePasswordVisibility} />
-                  ) : (
-                    <FaEyeSlash className="icon_eye" onClick={togglePasswordVisibility} />
-                  )}
-                </div>
-              </div>
-
-              <span className="forgotpassword">
-                Forgot Password? <Link onClick={() => setShowForgotPassword(true)}>Click Here</Link>
-              </span>
-
-              <br />
-
-              <button type="submit" className="btn"><span>Login</span></button>
-              <button onClick={() => navigate('/register')} className="btn_responsive"><span>Sign Up</span></button>
-
-              <div className="divider">Or</div>
-
-              <div className="container_icon">
-                <span className="social_button">
-                  <FcGoogle className="icon_google" onClick={() => googleLoginHandler()} />
-                </span>
-                <span className="social_button">
-                  <FaFacebook className='icon_facebook' />
-                </span>
-                <span className="social_button">
-                  <AiFillInstagram className='icon_insta' />
-                </span>
-              </div>
-            </form>
-          )}
         </div>
+
+        {/* Main Login Form Card */}
+        <div className="loginMain">
+          <div className="loginCard">
+            {/* Card Header with Logo */}
+            <div className="cardHeader">
+              <div className="logoCircle">
+                <img src={logo} alt="GoCar Logo" className="appLogo" />
+              </div>
+              <h2 className="welcomeTitle">Welcome Back</h2>
+            </div>
+
+            {showForgotPassword ? (
+              <div className="forgotPasswordCard">
+                <div className="forgotHeader">
+                  <FaKey className="forgotIcon" />
+                  <h3>Reset Password</h3>
+                  <p>Enter your email to receive a new password</p>
+                </div>
+                
+                <form onSubmit={handleForgotPassword} className="forgotForm">
+                  <div className="formGroup">
+                    <label htmlFor="email">Email Address</label>
+                    <div className="inputWrapper">
+                      <FaEnvelope className="inputIcon" />
+                      <input
+                        type="email"
+                        id="email"
+                        placeholder="your@email.com"
+                        value={email}
+                        onChange={(e) => setEmail(e.target.value)}
+                        required
+                        className="formInput"
+                      />
+                    </div>
+                  </div>
+                  
+                  <div className="formActions">
+                    <button type="submit" className="primaryBtn">
+                      Send Reset Link
+                    </button>
+                    <button 
+                      type="button" 
+                      className="secondaryBtn"
+                      onClick={() => setShowForgotPassword(false)}
+                    >
+                      Back to Login
+                    </button>
+                  </div>
+                </form>
+              </div>
+            ) : (
+              <form onSubmit={handleSubmit} className="loginForm">
+                <div className="formGroup">
+                  <label htmlFor="username">Username or Email</label>
+                  <div className="inputWrapper">
+                    <FaUserCircle className="inputIcon" />
+                    <input
+                      type="text"
+                      id="username"
+                      placeholder="Enter username or email"
+                      value={username}
+                      onChange={(e) => setUsername(e.target.value)}
+                      required
+                      className="formInput"
+                    />
+                  </div>
+                </div>
+                
+                <div className="formGroup">
+                  <label htmlFor="password">Password</label>
+                  <div className="inputWrapper">
+                    <FaLock className="inputIcon" />
+                    <input
+                      type={showPassword ? "text" : "password"}
+                      id="password"
+                      placeholder="Enter your password"
+                      value={password}
+                      onChange={(e) => setPassword(e.target.value)}
+                      required
+                      className="formInput"
+                    />
+                    <button 
+                      type="button" 
+                      className="passwordToggle"
+                      onClick={togglePasswordVisibility}
+                    >
+                      {showPassword ? (
+                        <FaEyeSlash className="toggleIcon" />
+                      ) : (
+                        <IoEyeSharp className="toggleIcon" />
+                      )}
+                    </button>
+                  </div>
+                </div>
+                
+                <div className="formOptions">
+                  <button 
+                    type="button" 
+                    className="forgotPasswordBtn"
+                    onClick={() => setShowForgotPassword(true)}
+                  >
+                    Forgot Password?
+                  </button>
+                </div>
+                
+                <button type="submit" className="primaryBtn loginBtn">
+                  Sign In
+                </button>
+                
+                <div className="divider">
+                  <span>Don't have an account?</span>
+                </div>
+                
+                <button 
+                  type="button" 
+                  className="secondaryBtn signupBtn"
+                  onClick={() => navigate('/register')}
+                >
+                  Create New Account
+                </button>
+              </form>
+            )}
+          </div>
+        </div>
+
       </div>
     </div>
   );

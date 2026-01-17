@@ -1324,22 +1324,6 @@ export const deleteCluster = async (clusterID) => {
   }
 };
 
-// Fetch Categories
-export const fetchCategories = async () => {
-  try {
-    const response = await fetch(`${API_URL}/categories`);
-
-    if (!response.ok) {
-      throw new Error('Failed to fetch categories');
-    }
-
-    const data = await response.json();
-    return data;
-  } catch (error) {
-    console.error('Error fetching categories:', error);
-    throw error;
-  }
-};
 
 export const createBooking = async (bookingData) => {
   try {
@@ -1490,7 +1474,7 @@ export const fetchExtras = async () => {
         'Content-Type': 'application/json',
       },
     });
-    
+
     const data = await response.json();
     return { ok: response.ok, status: response.status, data };
   } catch (error) {
@@ -1510,6 +1494,299 @@ export const fetchUserBookings = async (userId) => {
     return await response.json();
   } catch (error) {
     console.error('Error fetching user bookings:', error);
+    throw error;
+  }
+};
+
+// Vehicle API functions - Use your existing /product endpoint
+export const fetchVehicles = async () => {
+  try {
+    const response = await fetch(`${API_URL}/product`, {
+      method: 'GET',
+      headers: {
+        'Content-Type': 'application/json',
+      },
+    });
+
+    if (!response.ok) {
+      throw new Error(`HTTP error! status: ${response.status}`);
+    }
+
+    return await response.json();
+  } catch (error) {
+    console.error('Error fetching vehicles:', error);
+    throw error;
+  }
+};
+
+// GET /admin/vehicles endpoint (if you want to use this instead)
+export const fetchAdminVehicles = async () => {
+  try {
+    const response = await fetch(`${API_URL}/admin/vehicles`, {
+      method: 'GET',
+      headers: {
+        'Content-Type': 'application/json',
+      },
+    });
+
+    if (!response.ok) {
+      throw new Error(`HTTP error! status: ${response.status}`);
+    }
+
+    return await response.json();
+  } catch (error) {
+    console.error('Error fetching admin vehicles:', error);
+    throw error;
+  }
+};
+
+export const fetchAllVehicles = async () => {
+  try {
+    const response = await fetch(`${API_URL}/admin/vehicles/all`, {
+      method: 'GET',
+      headers: {
+        'Content-Type': 'application/json',
+      },
+    });
+
+    if (!response.ok) {
+      throw new Error(`HTTP error! status: ${response.status}`);
+    }
+
+    return await response.json();
+  } catch (error) {
+    console.error('Error fetching all vehicles:', error);
+    throw error;
+  }
+};
+
+export const fetchVehicleById = async (id) => {
+  try {
+    const response = await fetch(`${API_URL}/admin/vehicle/${id}`, {
+      method: 'GET',
+      headers: {
+        'Content-Type': 'application/json',
+      },
+    });
+
+    if (!response.ok) {
+      throw new Error(`HTTP error! status: ${response.status}`);
+    }
+
+    return await response.json();
+  } catch (error) {
+    console.error('Error fetching vehicle:', error);
+    throw error;
+  }
+};
+
+export const createVehicle = async (vehicleData) => {
+  try {
+    const response = await fetch(`${API_URL}/admin/vehicles`, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify(vehicleData),
+    });
+
+    if (!response.ok) {
+      throw new Error(`HTTP error! status: ${response.status}`);
+    }
+
+    return await response.json();
+  } catch (error) {
+    console.error('Error creating vehicle:', error);
+    throw error;
+  }
+};
+
+export const updateVehicle = async (id, vehicleData) => {
+  try {
+    const response = await fetch(`${API_URL}/admin/vehicles/${id}`, {
+      method: 'PUT',
+      headers: {
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify(vehicleData),
+    });
+
+    if (!response.ok) {
+      throw new Error(`HTTP error! status: ${response.status}`);
+    }
+
+    return await response.json();
+  } catch (error) {
+    console.error('Error updating vehicle:', error);
+    throw error;
+  }
+};
+
+export const updateVehicleStatus = async (id, status) => {
+  try {
+    const response = await fetch(`${API_URL}/admin/vehicles/${id}/status`, {
+      method: 'PUT',
+      headers: {
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify({ status }),
+    });
+
+    if (!response.ok) {
+      throw new Error(`HTTP error! status: ${response.status}`);
+    }
+
+    return await response.json();
+  } catch (error) {
+    console.error('Error updating vehicle status:', error);
+    throw error;
+  }
+};
+
+export const deleteVehicle = async (id) => {
+  try {
+    const response = await fetch(`${API_URL}/admin/vehicles/${id}`, {
+      method: 'DELETE',
+      headers: {
+        'Content-Type': 'application/json',
+      },
+    });
+
+    if (!response.ok) {
+      throw new Error(`HTTP error! status: ${response.status}`);
+    }
+
+    return await response.json();
+  } catch (error) {
+    console.error('Error deleting vehicle:', error);
+    throw error;
+  }
+};
+
+// Brand API functions - Use /admin/brands endpoint
+export const fetchBrands = async () => {
+  try {
+    const response = await fetch(`${API_URL}/admin/brands`, {
+      method: 'GET',
+      headers: {
+        'Content-Type': 'application/json',
+      },
+    });
+
+    if (!response.ok) {
+      throw new Error(`HTTP error! status: ${response.status}`);
+    }
+
+    const data = await response.json();
+    // If the endpoint returns just an array, wrap it in the expected format
+    if (Array.isArray(data)) {
+      return {
+        success: true,
+        data: data,
+        count: data.length
+      };
+    }
+    // If it already has the success/data structure, return as is
+    return data;
+  } catch (error) {
+    console.error('Error fetching brands:', error);
+    return {
+      success: false,
+      data: [],
+      count: 0,
+      error: error.message
+    };
+  }
+};
+
+// Category API functions - Use /admin/categories endpoint
+export const fetchCategories = async () => {
+  try {
+    const response = await fetch(`${API_URL}/admin/categories`, {
+      method: 'GET',
+      headers: {
+        'Content-Type': 'application/json',
+      },
+    });
+
+    if (!response.ok) {
+      throw new Error(`HTTP error! status: ${response.status}`);
+    }
+
+    const data = await response.json();
+    // If the endpoint returns just an array, wrap it in the expected format
+    if (Array.isArray(data)) {
+      return {
+        success: true,
+        data: data,
+        count: data.length
+      };
+    }
+    // If it already has the success/data structure, return as is
+    return data;
+  } catch (error) {
+    console.error('Error fetching categories:', error);
+    return {
+      success: false,
+      data: [],
+      count: 0,
+      error: error.message
+    };
+  }
+};
+
+// Region API functions - Use /admin/regions endpoint
+export const fetchRegions = async () => {
+  try {
+    const response = await fetch(`${API_URL}/admin/regions`, {
+      method: 'GET',
+      headers: {
+        'Content-Type': 'application/json',
+      },
+    });
+
+    if (!response.ok) {
+      throw new Error(`HTTP error! status: ${response.status}`);
+    }
+
+    const data = await response.json();
+    // If the endpoint returns just an array, wrap it in the expected format
+    if (Array.isArray(data)) {
+      return {
+        success: true,
+        data: data,
+        count: data.length
+      };
+    }
+    // If it already has the success/data structure, return as is
+    return data;
+  } catch (error) {
+    console.error('Error fetching regions:', error);
+    return {
+      success: false,
+      data: [],
+      count: 0,
+      error: error.message
+    };
+  }
+};
+
+export const fetchLocations = async () => {
+  try {
+    const response = await fetch(`${API_URL}/admin/locations`, {
+      method: 'GET',
+      headers: {
+        'Content-Type': 'application/json',
+      },
+    });
+
+    if (!response.ok) {
+      throw new Error(`HTTP error! status: ${response.status}`);
+    }
+
+    return await response.json();
+  } catch (error) {
+    console.error('Error fetching reservations:', error);
     throw error;
   }
 };

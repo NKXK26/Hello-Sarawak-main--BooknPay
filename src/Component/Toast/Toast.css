@@ -174,3 +174,57 @@
         }
     }
 }
+/* Add these rules to your existing Toast.css */
+
+.toast .column .displayMessage {
+    font-size: 1.1rem;
+    display: flex;
+    gap: 0.5rem;
+    align-items: center;
+    color: #1f2937; /* Default dark text color */
+}
+
+/* Type-specific text colors */
+.toast.success .column .displayMessage {
+    color: #065f46; /* Dark green for success */
+}
+
+.toast.error .column .displayMessage {
+    color: #991b1b; /* Dark red for error */
+}
+
+.toast.warning .column .displayMessage {
+    color: #92400e; /* Dark yellow for warning */
+}
+
+/* Background colors for better visibility */
+.toast.success {
+    background: #d1fae5 !important; /* Light green */
+}
+
+.toast.error {
+    background: #fee2e2 !important; /* Light red */
+}
+
+.toast.warning {
+    background: #fef3c7 !important; /* Light yellow */
+}
+
+/* Close button colors to match type */
+.toast.success .close_toast_button {
+    color: #065f46;
+}
+
+.toast.error .close_toast_button {
+    color: #991b1b;
+}
+
+.toast.warning .close_toast_button {
+    color: #92400e;
+}
+
+/* Add box shadow for better visibility */
+.toast {
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15) !important;
+    border-radius: 8px !important;
+}

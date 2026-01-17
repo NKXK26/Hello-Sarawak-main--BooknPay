@@ -15,12 +15,10 @@ const Home = () => {
       <div className="Home_Container_Main">
         <AuthProvider>
         <Navbar />
-        <Slider />
         <Destination />
         <Contact />
         <Back_To_Top_Button />
         <Footer />
-        <TawkMessenger />
         </AuthProvider>
       </div>
     </div>

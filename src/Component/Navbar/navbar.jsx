@@ -93,11 +93,11 @@ function Navbar() {
             document.body.style.top = `-${scrollY}px`;
             document.body.style.width = '100%';
             document.body.style.overflow = 'hidden';
-            
+
             // Add padding to prevent layout shift if a scrollbar was present
             const scrollbarWidth = window.innerWidth - document.documentElement.clientWidth;
             if (scrollbarWidth > 0) {
-              document.body.style.paddingRight = `${scrollbarWidth}px`;
+                document.body.style.paddingRight = `${scrollbarWidth}px`;
             }
 
             return () => {
@@ -295,7 +295,10 @@ function Navbar() {
             <div className="container_navbar">
                 <nav className="navbar navbar-expand-lg">
                     <Link to="/" className="navbar-brand-link">
-                        <h1 className="navbar_brand">Go Car</h1>
+                        <h1 className="navbar_brand">
+                            <span className="go-text">Go</span>
+                            <span className="car-text">Car</span>
+                        </h1>
                     </Link>
 
                     <div className="offcanvas offcanvas-end" tabIndex="-1" id="offcanvasNavbar" aria-labelledby="offcanvasNavbarLabel">
@@ -395,10 +398,8 @@ function Navbar() {
                     <div className="nav-actions">
                         {isLoggedIn && isCustomer && !isUserLoading ? (
                             <>
-                                {/* Notification Bell Icon */}
-                                <div className="nav-notification-container">
+                                {/* <div className="nav-notification-container">
                                     <FaBell className='nav-notification_icon' onClick={toggleNotifications} />
-                                    {/* Notification count badge */}
                                     {suggestedReservation.length > 0 && (
                                         <span className="notification-count-badge">
                                             {suggestedReservation.length}
@@ -422,8 +423,8 @@ function Navbar() {
                                                         </div>
                                                     ) : (
                                                         suggestedReservation.map((res) => (
-                                                            <div 
-                                                                className="nav-notification-item" 
+                                                            <div
+                                                                className="nav-notification-item"
                                                                 key={res.reservationid}
                                                                 onClick={() => {
                                                                     setSelectedNotification(res);
@@ -448,7 +449,7 @@ function Navbar() {
                                             </div>
                                         </div>
                                     )}
-                                </div>
+                                </div> */}
 
                                 {/* User Avatar */}
                                 <button
@@ -499,7 +500,7 @@ function Navbar() {
                     <div className="property-details-modal">
                         <div className="property-details-header">
                             <h2>Suggested Property Details</h2>
-                            <button 
+                            <button
                                 className="property-details-close-btn"
                                 onClick={() => setSelectedNotification(null)}
                             >
@@ -510,7 +511,7 @@ function Navbar() {
                             <div className="tour-property-item" style={{ boxShadow: 'none', cursor: 'default' }}>
                                 <div className="tour-property-image-box">
                                     {selectedNotification.propertyimage && selectedNotification.propertyimage.length > 0 ? (
-                                        <ImageSlider 
+                                        <ImageSlider
                                             images={selectedNotification.propertyimage}
                                             onClick={e => e.stopPropagation()}
                                         />
@@ -540,7 +541,7 @@ function Navbar() {
                         </div>
                         <div className="property-details-footer">
                             {/* Reject Button */}
-                            <button 
+                            <button
                                 className="property-details-action-btn reject-btn"
                                 onClick={async () => {
                                     if (!selectedNotification || !selectedNotification.propertyid || !selectedNotification.reservationid) {
@@ -556,7 +557,7 @@ function Navbar() {
                                             setTimeout(() => {
                                                 setSelectedNotification(null);
                                                 navigate('/cart');
-                                              }, 3000);
+                                            }, 3000);
                                         } catch (error) {
                                             displayToast('error', 'Failed to reject suggested room');
                                         }
@@ -567,7 +568,7 @@ function Navbar() {
                             </button>
 
                             {/* Accept Button */}
-                            <button 
+                            <button
                                 className="property-details-action-btn accept-btn"
                                 onClick={async () => {
                                     if (selectedNotification && selectedNotification.reservationid) {
@@ -577,7 +578,7 @@ function Navbar() {
                                             setTimeout(() => {
                                                 setSelectedNotification(null);
                                                 navigate('/cart');
-                                              }, 3000);
+                                            }, 3000);
                                         } catch (error) {
                                             displayToast('error', 'Failed to accept reservation');
                                         }

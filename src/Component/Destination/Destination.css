@@ -1,567 +1,574 @@
-@import url('https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600&display=swap');
-
-body {
-    margin: 0;
-    padding: 0;
-    font-family: Poppins, sans-serif;
-    font-size: 12px;
-}
-
 .destination-container {
-    overflow-x: hidden;
-    width: 100%;
+  width: 100%;
+  overflow-x: hidden;
 }
 
-.destination {
-    margin: 4rem 6rem;
+/* Hero Section */
+.hero-section {
+  background-size: cover;
+  background-position: center;
+  color: white;
+  padding: 100px 40px;
+  text-align: center;
+  position: relative;
+  min-height: 600px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
 }
 
-.destination h1 {
-    font-size: 2.8rem;
-    text-align: center;
+.hero-content {
+  max-width: 800px;
+  z-index: 2;
 }
 
-.Main_description {
-    font-size: 18px;
-    text-align: center;
-    opacity: 0;
-    transform: translateY(20px);
-    transition: opacity 0.6s ease-in 0.2s, transform 0.6s ease-in 0.2s;
+.hero-section h1 {
+  font-size: 48px;
+  font-weight: 700;
+  margin-bottom: 20px;
+  line-height: 1.2;
 }
 
-.destinations-wrapper {
-    display: flex;
-    flex-direction: column;
-    gap: 4rem;
+.hero-section p {
+  font-size: 20px;
+  margin-bottom: 40px;
+  opacity: 0.9;
 }
 
-.first-des {
-    display: flex;
-    align-items: center;
-    justify-content: space-between;
-    margin-top: 4.5rem;
-    opacity: 0;
-    transform: translateY(20px);
-    transition: opacity 0.5s ease-in 0.3s, transform 0.5s ease-in 0.3s;
+.hero-stats {
+  display: flex;
+  justify-content: center;
+  gap: 60px;
+  margin: 50px 0;
+  flex-wrap: wrap;
 }
 
-.des-text {
-    width: 45%;
-    text-align: start;
-    font-size: 1.1rem;
-    transition: opacity 0.5s ease-in 0.4s, transform 0.5s ease-in 0.4s;
+.stat-item {
+  display: flex;
+  align-items: center;
+  gap: 15px;
+  text-align: left;
 }
 
-.des-text h2 {
-    color: #CC8C18;
-    padding-bottom: 1rem;
+.stat-icon {
+  font-size: 40px;
+  color: #FF6B35;
 }
 
-.first-des .des-text .location {
-    font-size: 16px;
-    display: flex;
-    align-items: center;
-    gap: 5px;
+.stat-item h3 {
+  font-size: 36px;
+  margin: 0;
+  font-weight: 700;
 }
 
-.first-des .des-text .icon_location {
-    font-size: 25px;
-    color: #ff0000;
+.stat-item p {
+  font-size: 16px;
+  margin: 0;
+  opacity: 0.8;
 }
 
-.first-des .des-text .location_description {
-    font-size: 18px;
-    margin-top: 35px;
-    line-height: 1.6;
+.hero-cta {
+  background: #FF6B35;
+  color: white;
+  border: none;
+  padding: 18px 40px;
+  border-radius: 10px;
+  font-size: 18px;
+  font-weight: 600;
+  cursor: pointer;
+  display: inline-flex;
+  align-items: center;
+  gap: 10px;
+  transition: all 0.3s ease;
 }
 
-.image {
-    position: relative;
-    width: 50%;
-    display: flex;
-    justify-content: space-between;
-    perspective: 1000px;
+.hero-cta:hover {
+  background: #e55a2c;
+  transform: translateY(-2px);
+  box-shadow: 0 10px 25px rgba(255, 107, 53, 0.3);
 }
 
-.image img {
-    width: 49%;
-    height: 350px;
-    object-fit: cover;
-    border-radius: 6px;
-    box-shadow: -1px 1px 62px -18px rgba(0, 0, 0, 0.19);
-    transition: transform 0.3s ease, box-shadow 0.3s ease;
-    transform: rotateX(var(--rX, 0deg)) rotateY(var(--rY, 0deg));
+/* Section Styles */
+.section {
+  padding: 80px 40px;
 }
 
-.image img:nth-child(2) {
-    position: absolute;
-    top: -10%;
-    right: 0;
+.section-header {
+  text-align: center;
+  margin-bottom: 50px;
 }
 
-.buttons_destination {
-    display: grid;
-    grid-template-columns: repeat(2, 130px);
-    grid-template-rows: 40px;
-    gap: 5px;
-    margin-top: 2rem;
+.section-header h2 {
+  font-size: 36px;
+  color: #1E405C;
+  margin-bottom: 15px;
+  font-weight: 700;
 }
 
-.buttons_destination button {
-    border: none;
-    background-color: #CC8C18;
-    color: #fff;
-    letter-spacing: 3px;
-    font-family: Poppins, sans-serif;
-    font-weight: 500;
-    border-radius: 5px;
-    transition: 0.3s;
-    cursor: pointer;
+.section-header p {
+  font-size: 18px;
+  color: #666;
 }
 
-.buttons_destination button:hover {
-    background-color: #493829;
+/* Benefits Section */
+.benefits-section {
+  background: #f8f9fa;
 }
 
-/* Trip section */
-.trip {
-    margin: 6.5rem 6rem;
-    color: #2a2a2a;
-    text-align: center;
+.benefits-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+  gap: 30px;
+  max-width: 1200px;
+  margin: 0 auto;
 }
 
-.trip h1 {
-    font-size: 3rem;
+.benefit-card {
+  background: white;
+  padding: 30px;
+  border-radius: 12px;
+  text-align: center;
+  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.08);
+  transition: transform 0.3s ease;
 }
 
-.trip p {
-    font-size: 1.2rem;
-    color: #555;
+.benefit-card:hover {
+  transform: translateY(-10px);
 }
 
-.tripcard {
-    margin-top: 3rem;
-    display: flex;
-    justify-content: center;
-    flex-wrap: wrap;
-    gap: 2rem;
+.benefit-icon {
+  font-size: 48px;
+  color: #2A5C82;
+  margin-bottom: 20px;
 }
 
-.t-card {
-    width: 31%;
-    text-align: start;
-    box-shadow: 0 5px 25px 2px rgba(0, 0, 0, 0.1);
-    border-radius: 7px;
-    padding: 1rem 1.5rem;
-    opacity: 0;
-    transform: translateY(20px);
-    transition: opacity 0.7s ease-out, transform 0.7s ease-out;
+.benefit-card h3 {
+  font-size: 20px;
+  color: #1E405C;
+  margin-bottom: 15px;
+  font-weight: 600;
 }
 
-.t-card p {
-    font-size: 14px;
-    line-height: 1.6;
+.benefit-card p {
+  color: #666;
+  line-height: 1.6;
 }
 
-.t-image {
-    height: 250px;
-    overflow: hidden;
-    border-radius: 7px;
+/* Vehicle Grid */
+.vehicle_grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(350px, 1fr));
+  gap: 30px;
+  max-width: 1200px;
+  margin: 0 auto;
 }
 
-.t-image img {
-    width: 100%;
-    height: 100%;
-    transition: 0.3s ease-in-out;
-    border-radius: 7px;
-    object-fit: cover;
-}
-
-.t-image:hover img {
-    transform: scale(1.2);
-}
-
-.t-card h3 {
-    padding: 2rem 0 1.2rem 0;
-    margin: 0;
-    color: #000000;
-}
-
-.t-card.fade-in {
-    opacity: 1;
-    transform: translateY(0);
+.vehicle_card {
+  background: white;
+  border-radius: 16px;
+  overflow: hidden;
+  box-shadow: 0 8px 30px rgba(0, 0, 0, 0.08);
+  transition: transform 0.3s ease, box-shadow 0.3s ease;
+  border: 1px solid #eaeaea;
+  opacity: 0;
+  transform: translateY(20px);
 }
 
 .fade-in {
-    opacity: 1;
-    transform: translateY(0);
+  opacity: 1;
+  transform: translateY(0);
+  transition: opacity 0.6s ease, transform 0.6s ease;
 }
 
-/* Room section */
-.room_section {
-    width: 100%;
-    padding: 2rem 0 4rem;
+.vehicle_card:hover {
+  transform: translateY(-10px);
+  box-shadow: 0 15px 40px rgba(0, 0, 0, 0.15);
 }
 
-.room_des {
-    text-align: center;
+.vehicle_image_container {
+  position: relative;
+  height: 220px;
+  overflow: hidden;
+}
+
+.vehicle_image {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  transition: transform 0.5s ease;
+  transform-style: preserve-3d;
+  perspective: 1000px;
+}
+
+.vehicle_card:hover .vehicle_image {
+  transform: scale(1.05);
+}
+
+.availability_badge,
+.popular_badge {
+  position: absolute;
+  top: 15px;
+  padding: 6px 12px;
+  border-radius: 20px;
+  font-size: 12px;
+  font-weight: 600;
+  display: flex;
+  align-items: center;
+  gap: 5px;
+}
+
+.availability_badge {
+  right: 15px;
+  background: #28a745;
+  color: white;
+}
+
+.popular_badge {
+  left: 15px;
+  background: #FF6B35;
+  color: white;
+}
+
+.vehicle_info {
+  padding: 25px;
+}
+
+.vehicle_header {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  margin-bottom: 15px;
+}
+
+.vehicle_header h3 {
+  font-size: 20px;
+  color: #1E405C;
+  margin: 0 0 5px 0;
+  font-weight: 700;
+}
+
+.vehicle_brand {
+  color: #666;
+  font-size: 14px;
+  margin: 0;
+}
+
+.vehicle_type {
+  background: #2A5C82;
+  color: white;
+  padding: 4px 12px;
+  border-radius: 20px;
+  font-size: 12px;
+  font-weight: 600;
+}
+
+.vehicle_rating {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  margin-bottom: 20px;
+}
+
+.stars {
+  display: flex;
+  gap: 2px;
+}
+
+.star {
+  color: #ddd;
+  font-size: 14px;
+}
+
+.star.filled {
+  color: #FF6B35;
+}
+
+.rating_text {
+  font-size: 14px;
+  color: #666;
+  font-weight: 600;
+}
+
+.vehicle_specs {
+  display: flex;
+  justify-content: space-between;
+  margin-bottom: 20px;
+  padding-bottom: 20px;
+  border-bottom: 1px solid #eee;
+}
+
+.spec_item {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 8px;
+  text-align: center;
+}
+
+.spec_icon {
+  font-size: 20px;
+  color: #FF6B35;
+}
+
+.spec_item span {
+  font-size: 12px;
+  color: #666;
+  font-weight: 500;
+}
+
+.vehicle_features {
+  margin-bottom: 25px;
+}
+
+.feature_item {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  margin-bottom: 10px;
+}
+
+.feature_icon {
+  color: #28a745;
+  font-size: 14px;
+}
+
+.feature_item span {
+  font-size: 14px;
+  color: #666;
+}
+
+.vehicle_footer {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding-top: 20px;
+  border-top: 2px solid #f0f0f0;
+}
+
+.price_section {
+  display: flex;
+  flex-direction: column;
+}
+
+.price_label {
+  font-size: 12px;
+  color: #888;
+  margin-bottom: 4px;
+}
+
+.price_amount {
+  display: flex;
+  align-items: baseline;
+  gap: 4px;
+}
+
+.currency {
+  font-size: 16px;
+  color: #1E405C;
+  font-weight: 600;
+}
+
+.price {
+  font-size: 28px;
+  color: #2A5C82;
+  font-weight: 700;
+}
+
+.period {
+  font-size: 14px;
+  color: #666;
+}
+
+.book_btn {
+  background: linear-gradient(135deg, #2A5C82 0%, #1E405C 100%);
+  color: white;
+  border: none;
+  padding: 12px 24px;
+  border-radius: 8px;
+  font-size: 15px;
+  font-weight: 600;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  transition: all 0.3s ease;
+}
+
+.book_btn:hover {
+  background: linear-gradient(135deg, #1E405C 0%, #153048 100%);
+  transform: translateY(-2px);
+  box-shadow: 0 6px 20px rgba(42, 92, 130, 0.3);
+}
+
+.btn_icon {
+  font-size: 16px;
+}
+
+/* CTA Section */
+.cta-section {
+  background: linear-gradient(135deg, #2A5C82, #1E405C);
+  color: white;
+  padding: 80px 40px;
+  text-align: center;
+}
+
+.cta-content {
+  max-width: 800px;
+  margin: 0 auto;
+}
+
+.cta-content h2 {
+  font-size: 36px;
+  margin-bottom: 20px;
+  font-weight: 700;
+}
+
+.cta-content p {
+  font-size: 18px;
+  margin-bottom: 40px;
+  opacity: 0.9;
+}
+
+.cta-buttons {
+  display: flex;
+  gap: 20px;
+  justify-content: center;
+  flex-wrap: wrap;
+}
+
+.cta-primary {
+  background: #FF6B35;
+  color: white;
+  border: none;
+  padding: 16px 40px;
+  border-radius: 10px;
+  font-size: 17px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.3s ease;
+}
+
+.cta-primary:hover {
+  background: #e55a2c;
+  transform: translateY(-2px);
+  box-shadow: 0 6px 20px rgba(255, 107, 53, 0.3);
+}
+
+.cta-secondary {
+  background: transparent;
+  color: white;
+  border: 2px solid white;
+  padding: 16px 40px;
+  border-radius: 10px;
+  font-size: 17px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.3s ease;
+}
+
+.cta-secondary:hover {
+  background: white;
+  color: #1E405C;
+  transform: translateY(-2px);
+}
+
+/* Responsive Design */
+@media (max-width: 1024px) {
+  .vehicle_grid {
+    grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+    gap: 25px;
+  }
+  
+  .benefits-grid {
+    grid-template-columns: repeat(2, 1fr);
+  }
+}
+
+@media (max-width: 768px) {
+  .hero-section {
+    padding: 60px 20px;
+    min-height: 500px;
+  }
+  
+  .hero-section h1 {
+    font-size: 36px;
+  }
+  
+  .hero-section p {
     font-size: 18px;
-    margin-bottom: 2rem;
-}
-
-.room_des h1 {
-    font-size: 2.8rem;
-    margin-bottom: 0.5rem;
-}
-
-.wrapper_room {
-    width: 100%;
-    min-height: 600px;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    overflow-x: hidden;
-    padding: 0 1rem;
-}
-
-.container_room {
-    height: 550px;
-    display: flex;
-    flex-wrap: nowrap;
-    justify-content: center;
-    gap: 0.5rem;
-    max-width: 1200px;
-}
-
-.card_room {
-    width: 100px;
-    height: 450px;
-    border-radius: 2rem;
-    background-size: cover;
-    background-position: center;
-    overflow: hidden;
-    margin: 0 10px;
-    display: flex;
-    align-items: flex-end;
-    transition: .6s cubic-bezier(.28, -0.03, 0, .99);
-    cursor: pointer;
-}
-
-.card_room .row {
-    color: white;
-    display: flex;
-    flex-wrap: nowrap;
-}
-
-.card_room .row .icon_room {
-    background: #CC8C18;
-    color: white;
-    border-radius: 50%;
-    width: 40px;
-    height: 40px;
-    display: flex;
-    justify-content: center;
-    align-items: center;
-    margin: 30px;
-    margin-bottom: 10px;
-    cursor: pointer;
-}
-
-.card_room .row .description_room {
-    display: flex;
-    justify-content: center;
+  }
+  
+  .hero-stats {
+    gap: 30px;
+  }
+  
+  .section {
+    padding: 60px 20px;
+  }
+  
+  .section-header h2 {
+    font-size: 30px;
+  }
+  
+  .vehicle_grid {
+    grid-template-columns: 1fr;
+    max-width: 500px;
+  }
+  
+  .benefits-grid {
+    grid-template-columns: 1fr;
+  }
+  
+  .cta-buttons {
     flex-direction: column;
-    overflow: hidden;
-    height: 80px;
-    width: 520px;
-    opacity: 0;
-    transform: translateY(30px);
-    transition-delay: .3s;
-    transition: all .3s ease;
+    align-items: center;
+  }
+  
+  .cta-primary,
+  .cta-secondary {
+    width: 100%;
+    max-width: 300px;
+  }
 }
 
-.card_room:hover {
-    transform: scale(1.05);
-}
-
-.description_room p {
-    color: #ffffff;
-    padding-top: 5px;
-}
-
-.description_room h4 {
-    text-transform: uppercase;
-}
-
-.room_display {
-    display: none;
-}
-
-.room_display:checked+label {
-    width: 600px;
-}
-
-.room_display:checked+label .description_room {
-    opacity: 1 !important;
-    transform: translateY(0) !important;
-}
-
-.card_room[for="c1"] {
-    background-image: url('../../public/Room1.jpg');
-}
-
-.card_room[for="c2"] {
-    background-image: url('../../public/Room2.jpg');
-}
-
-.card_room[for="c3"] {
-    background-image: url('../../public/Room3.jpg');
-}
-
-.card_room[for="c4"] {
-    background-image: url('../../public/Room4.jpg');
-}
-
-.card_room[for="c5"] {
-    background-image: url('../../public/Room5.jpg');
-}
-
-.card_room[for="c6"] {
-    background-image: url('../../public/Room6.jpg');
-}
-
-@keyframes fadeIn {
-    from {
-        opacity: 0;
-        transform: translateY(20px);
-    }
-
-    to {
-        opacity: 1;
-        transform: translateY(0);
-    }
-}
-
-@media only screen and (max-width: 768px) {
-    .destination {
-        margin: 3rem 2rem;
-    }
-
-    .destination h1 {
-        font-size: 2.2rem;
-    }
-
-    .Main_description {
-        font-size: 16px;
-    }
-
-    .first-des {
-        flex-direction: column-reverse;
-        margin-top: 2.5rem;
-    }
-
-    .des-text {
-        width: 100%;
-        margin-top: 1.5rem;
-    }
-
-    .des-text h2 {
-        font-size: 1.6rem;
-    }
-
-    .first-des .des-text .location_description {
-        font-size: 16px;
-        line-height: 1.5;
-    }
-
-    .image {
-        width: 100%;
-        margin: 1.8rem 0;
-    }
-
-    .image img {
-        height: 250px;
-    }
-
-    .image img:nth-child(2) {
-        top: -10%;
-    }
-
-    .buttons_destination {
-        grid-template-columns: 1fr;
-        margin-top: 1.5rem;
-    }
-
-    .trip {
-        margin: 4rem 2rem;
-    }
-
-    .trip h1 {
-        font-size: 2.2rem;
-    }
-
-    .trip p {
-        font-size: 1rem;
-    }
-
-    .tripcard {
-        gap: 1.5rem;
-    }
-
-    .t-card {
-        width: 45%;
-        margin-bottom: 1rem;
-    }
-
-    .wrapper_room {
-        min-height: auto;
-        padding: 2rem 1rem;
-    }
-
-    .container_room {
-        flex-wrap: wrap;
-        justify-content: center;
-        height: auto;
-        gap: 1rem;
-    }
-
-    .card_room {
-        width: 45%;
-        height: 250px;
-        margin: 5px;
-    }
-
-    .room_display:checked+label {
-        width: 90%;
-        height: 300px;
-    }
-
-    .card_room .row .description_room {
-        width: auto;
-        max-width: 300px;
-    }
-
-    .description_room {
-        padding-left: 20px;
-    }
-}
-
-@media only screen and (max-width: 480px) {
-    .destination {
-        margin: 2rem 1rem;
-    }
-
-    .destination h1 {
-        font-size: 1.8rem;
-    }
-
-    .Main_description {
-        font-size: 14px;
-    }
-
-    .des-text h2 {
-        font-size: 1.4rem;
-    }
-
-    .first-des .des-text .location {
-        font-size: 14px;
-    }
-
-    .first-des .des-text .icon_location {
-        font-size: 20px;
-    }
-
-    .first-des .des-text .location_description {
-        font-size: 14px;
-        margin-top: 20px;
-    }
-
-    .image img {
-        height: 180px;
-    }
-
-    .buttons_destination {
-        grid-template-columns: 1fr;
-    }
-
-    .buttons_destination button {
-        width: 100%;
-        font-size: 12px;
-    }
-
-    .trip {
-        margin: 3rem 1rem;
-    }
-
-    .trip h1 {
-        font-size: 1.8rem;
-    }
-
-    .trip p {
-        font-size: 0.9rem;
-    }
-
-    .t-card {
-        width: 100%;
-        padding: 1rem;
-    }
-
-    .t-image {
-        height: 200px;
-    }
-
-    .t-card h3 {
-        padding: 1rem 0 0.8rem 0;
-        font-size: 1.2rem;
-    }
-
-    .t-card p {
-        font-size: 12px;
-    }
-
-    .room_des h1 {
-        font-size: 1.8rem;
-    }
-
-    .room_des p {
-        font-size: 14px;
-    }
-
-    .wrapper_room {
-        padding: 1rem 0.5rem;
-    }
-
-    .container_room {
-        gap: 0.5rem;
-    }
-
-    .card_room {
-        width: 90%;
-        height: 80px;
-        margin: 5px 0;
-    }
-
-    .room_display:checked+label {
-        width: 90%;
-        height: 250px;
-    }
-
-    .card_room .row .icon_room {
-        width: 30px;
-        height: 30px;
-        margin: 20px;
-    }
-
-    .card_room .row .description_room {
-        height: 70px;
-        max-width: 200px;
-    }
-
-    .description_room h4 {
-        font-size: 1rem;
-    }
-
-    .description_room p {
-        font-size: 0.8rem;
-    }
+@media (max-width: 480px) {
+  .hero-section {
+    padding: 40px 15px;
+    min-height: 400px;
+  }
+  
+  .hero-section h1 {
+    font-size: 28px;
+  }
+  
+  .hero-stats {
+    flex-direction: column;
+    gap: 20px;
+    align-items: center;
+  }
+  
+  .vehicle_info {
+    padding: 20px;
+  }
+  
+  .vehicle_header {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 10px;
+  }
+  
+  .vehicle_specs {
+    flex-wrap: wrap;
+    gap: 15px;
+  }
+  
+  .vehicle_footer {
+    flex-direction: column;
+    gap: 20px;
+    align-items: stretch;
+  }
+  
+  .price_section {
+    align-items: center;
+  }
 }

@@ -2,13 +2,12 @@ import React, { useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import './Register.css';
 
-// Import Assets using ES Modules
-import video from '../../../public/Sarawak_2.mp4';
-import logo from '../../../public/Sarawak_icon.png';
+// Import Assets
+import logo from '../../../public/Perodua Axia.png';
 
 // Import Icons
-import { FaMailBulk, FaUserAlt, FaEyeSlash, FaPhoneAlt, FaUserCircle } from 'react-icons/fa';
-import { RiLockPasswordFill, RiLockPasswordLine } from 'react-icons/ri';
+import { FaMailBulk, FaUserAlt, FaEyeSlash, FaPhoneAlt, FaUserCircle, FaCar, FaKey, FaLock, FaEnvelope } from 'react-icons/fa';
+import { RiLockPasswordFill, RiLockPasswordLine } from "react-icons/ri";
 import { IoEyeSharp } from "react-icons/io5";
 
 // Import API function
@@ -117,170 +116,207 @@ const Register = () => {
   };
 
   return (
-    <div className="registerPage flex">
+    <div className="registerPage">
       {showToast && <Toast type={toastType} message={toastMessage} />}
 
-      <div className="container flex">
-        <div className="videoDiv">
-          <video src={video} autoPlay muted loop></video>
-          <div className="textDiv">
-            <h2 className="title_A">Hello Sarawak</h2>
-            <h3 className="title_B">Your Journey Begins</h3>
-          </div>
-          <div className="footerDiv flex">
-            <span className="text">Already Have Account?</span>
-            <Link to={'/login'}>
-              <button className="btn">Sign In</button>
-            </Link>
+      <div className="registerContainer">
+        {/* Top Brand Header */}
+        <div className="registerHeader">
+          <div className="brandSection">
+            <div className="brandText">
+              <h1 className="brandTitle">Go<span className="brandHighlight">Car</span></h1>
+            </div>
           </div>
         </div>
 
-        <div className="formDiv flex">
-          <div className="headerDiv">
-            <img src={logo} alt="Logo Image" />
-            <div className="textDiv">
-              <h3 className="title_C">
-                Welcome To
-                <br />
-                Hello Sarawak
-              </h3>
+        {/* Main Register Form Card */}
+        <div className="registerMain">
+          <div className="registerCard">
+            {/* Card Header with Logo */}
+            <div className="cardHeader">
+              <div className="logoCircle">
+                <img src={logo} alt="GoCar Logo" className="appLogo" />
+              </div>
+              <h2 className="welcomeTitle">Create Account</h2>
             </div>
+
+            <form onSubmit={handleSubmit} className="registerForm">
+              <div className="formGrid">
+                <div className="formGroup">
+                  <label htmlFor="firstName">First Name</label>
+                  <div className="inputWrapper">
+                    <FaUserAlt className="inputIcon" />
+                    <input
+                      type="text"
+                      id="firstName"
+                      placeholder="Enter first name"
+                      value={firstName}
+                      onChange={(e) => setFirstName(e.target.value)}
+                      required
+                      className="formInput"
+                    />
+                  </div>
+                </div>
+
+                <div className="formGroup">
+                  <label htmlFor="lastName">Last Name</label>
+                  <div className="inputWrapper">
+                    <FaUserAlt className="inputIcon" />
+                    <input
+                      type="text"
+                      id="lastName"
+                      placeholder="Enter last name"
+                      value={lastName}
+                      onChange={(e) => setLastName(e.target.value)}
+                      required
+                      className="formInput"
+                    />
+                  </div>
+                </div>
+              </div>
+
+              <div className="formGroup">
+                <label htmlFor="username">Username</label>
+                <div className="inputWrapper">
+                  <FaUserCircle className="inputIcon" />
+                  <input
+                    type="text"
+                    id="username"
+                    placeholder="Choose a username"
+                    value={username}
+                    onChange={(e) => setUsername(e.target.value)}
+                    required
+                    className="formInput"
+                  />
+                </div>
+                <div className="inputHelper">Letters and numbers only</div>
+              </div>
+
+              <div className="formGroup">
+                <label htmlFor="email">Email Address</label>
+                <div className="inputWrapper">
+                  <FaEnvelope className="inputIcon" />
+                  <input
+                    type="email"
+                    id="email"
+                    placeholder="your@email.com"
+                    value={email}
+                    onChange={(e) => setEmail(e.target.value)}
+                    required
+                    className="formInput"
+                  />
+                </div>
+              </div>
+
+              <div className="formGroup">
+                <label htmlFor="phoneNumber">Phone Number</label>
+                <div className="inputWrapper">
+                  <FaPhoneAlt className="inputIcon" />
+                  <input
+                    type="tel"
+                    id="phoneNumber"
+                    placeholder="Enter phone number"
+                    value={phoneNumber}
+                    onChange={(e) => setPhoneNumber(e.target.value)}
+                    required
+                    className="formInput"
+                  />
+                </div>
+              </div>
+
+              <div className="formGrid">
+                <div className="formGroup">
+                  <label htmlFor="password">Password</label>
+                  <div className="inputWrapper">
+                    <RiLockPasswordFill className="inputIcon" />
+                    <input
+                      type={showPassword ? "text" : "password"}
+                      id="password"
+                      placeholder="Create password"
+                      value={password}
+                      onChange={(e) => setPassword(e.target.value)}
+                      required
+                      className="formInput"
+                    />
+                    <button 
+                      type="button" 
+                      className="passwordToggle"
+                      onClick={togglePasswordVisibility}
+                    >
+                      {showPassword ? (
+                        <FaEyeSlash className="toggleIcon" />
+                      ) : (
+                        <IoEyeSharp className="toggleIcon" />
+                      )}
+                    </button>
+                  </div>
+                  <div className="inputHelper">8+ characters with letters & numbers</div>
+                </div>
+
+                <div className="formGroup">
+                  <label htmlFor="confirmPassword">Confirm Password</label>
+                  <div className="inputWrapper">
+                    <RiLockPasswordLine className="inputIcon" />
+                    <input
+                      type={showPassword ? "text" : "password"}
+                      id="confirmPassword"
+                      placeholder="Confirm password"
+                      value={confirmPassword}
+                      onChange={(e) => setConfirmPassword(e.target.value)}
+                      required
+                      className="formInput"
+                    />
+                    <button 
+                      type="button" 
+                      className="passwordToggle"
+                      onClick={togglePasswordVisibility}
+                    >
+                      {showPassword ? (
+                        <FaEyeSlash className="toggleIcon" />
+                      ) : (
+                        <IoEyeSharp className="toggleIcon" />
+                      )}
+                    </button>
+                  </div>
+                </div>
+              </div>
+
+              {/* CAPTCHA Section */}
+              <div className="captchaSection">
+                <VisualCaptcha onValidationChange={setIsCaptchaValid} />
+                <div className="captchaHelper">
+                  Complete the verification to continue
+                </div>
+              </div>
+
+              <div className="termsAgreement">
+                <input type="checkbox" id="terms" required />
+                <label htmlFor="terms">
+                  I agree to the <Link to="/terms">Terms of Service</Link> and <Link to="/privacy">Privacy Policy</Link>
+                </label>
+              </div>
+
+              <button 
+                type="submit" 
+                className="primaryBtn registerBtn"
+                disabled={!isCaptchaValid}
+              >
+                Create Account
+              </button>
+
+              <div className="divider">
+                <span>Already have an account?</span>
+              </div>
+
+              <button 
+                type="button" 
+                className="secondaryBtn loginBtn"
+                onClick={() => navigate('/login')}
+              >
+                Sign In to Your Account
+              </button>
+            </form>
           </div>
-
-          <form onSubmit={handleSubmit} className="form grid">
-            <div className="inputDiv">
-              <label htmlFor="firstName">First Name</label>
-              <div className="input flex">
-                <FaUserAlt className="icon" />
-                <input
-                  type="text"
-                  id="firstName"
-                  placeholder="Enter First Name"
-                  value={firstName}
-                  onChange={(e) => setFirstName(e.target.value)}
-                  required
-                />
-              </div>
-            </div>
-
-            <div className="inputDiv">
-              <label htmlFor="lastName">Last Name</label>
-              <div className="input flex">
-                <FaUserAlt className="icon" />
-                <input
-                  type="text"
-                  id="lastName"
-                  placeholder="Enter Last Name"
-                  value={lastName}
-                  onChange={(e) => setLastName(e.target.value)}
-                  required
-                />
-              </div>
-            </div>
-
-            <div className="inputDiv">
-              <label htmlFor="username">Username</label>
-              <div className="input flex">
-                <FaUserCircle className="icon" />
-                <input
-                  type="text"
-                  id="username"
-                  placeholder="Enter Username"
-                  value={username}
-                  onChange={(e) => setUsername(e.target.value)}
-                  required
-                />
-              </div>
-            </div>
-
-            <div className="inputDiv">
-              <label htmlFor="email">Email</label>
-              <div className="input flex">
-                <FaMailBulk className="icon" />
-                <input
-                  type="email"
-                  id="email"
-                  placeholder="Enter Email"
-                  value={email}
-                  onChange={(e) => setEmail(e.target.value)}
-                  required
-                />
-              </div>
-            </div>
-
-            <div className="inputDiv">
-              <label htmlFor="phoneNumber">Phone Number</label>
-              <div className="input flex">
-                <FaPhoneAlt className="icon" />
-                <input
-                  type="tel"
-                  id="phoneNumber"
-                  placeholder="Enter Phone Number"
-                  value={phoneNumber}
-                  onChange={(e) => setPhoneNumber(e.target.value)}
-                  required
-                />
-              </div>
-            </div>
-
-            <div className="inputDiv">
-              <label htmlFor="password">Password</label>
-              <div className="input flex">
-                <RiLockPasswordFill className="icon" />
-                <input
-                  type={showPassword ? "text" : "password"}
-                  id="password"
-                  placeholder="Enter Password"
-                  value={password}
-                  onChange={(e) => setPassword(e.target.value)}
-                  required
-                />
-                  {showPassword ? (
-                   <IoEyeSharp
-                    className="icon_eye" 
-                    onClick={togglePasswordVisibility} />
-                  ) : (
-                   <FaEyeSlash
-                    className="icon_eye" 
-                    onClick={togglePasswordVisibility} />
-                  )}
-              </div>
-            </div>
-
-            <div className="inputDiv">
-              <label htmlFor="confirmPassword">Confirm Password</label>
-              <div className="input flex">
-                <RiLockPasswordLine className="icon" />
-                <input
-                  type={showPassword ? "text" : "password"}
-                  id="confirmPassword"
-                  placeholder="Confirm Password"
-                  value={confirmPassword}
-                  onChange={(e) => setConfirmPassword(e.target.value)}
-                  required
-                />
-                  {showPassword ? (
-                   <IoEyeSharp
-                    className="icon_eye" 
-                    onClick={togglePasswordVisibility} />
-                  ) : (
-                   <FaEyeSlash
-                    className="icon_eye" 
-                    onClick={togglePasswordVisibility} />
-                  )}
-              </div>
-            </div>
-
-            <VisualCaptcha onValidationChange={setIsCaptchaValid} />
-
-          <div className="container_button">
-            <button type="submit" className="btn"><span>Sign Up</span></button>
-              <Link to={'/login'}>
-                <button type="button" className="btn_responsive" style={{ marginTop: '10px' }}><span>Login</span></button>
-              </Link>
-          </div>
-
-          </form>
         </div>
       </div>
     </div>
